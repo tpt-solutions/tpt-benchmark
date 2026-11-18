@@ -1,0 +1,9 @@
+/target
+Cargo.lock.bak
+*.profraw
+*.perf
+perf.data*
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

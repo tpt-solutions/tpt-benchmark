@@ -1,0 +1,105 @@
+Design Specification: tpt-benchmark
+1. Executive Summary
+tpt-benchmark is a next-generation Rust benchmarking framework designed to replace Criterion, Divan, and Iai with a single, unified engine. It introduces a Layered Measurement Architecture, allowing developers to simultaneously measure wall-clock time, heap allocations, and hardware CPU counters. It utilizes Sequential Statistical Analysis to achieve Criterion-level rigor in a fraction of the execution time.
+2. Licensing & Dependency Mandate
+To ensure maximum adoption and zero legal friction for your solo-maintained TPT ecosystem, the dependency tree is strictly governed.
+Project License: MIT.
+Dependency Rule: No Apache-2.0-only dependencies.
+Allowed: MIT, BSD-2-Clause, BSD-3-Clause, ISC, Unicode-DFS, and dual-licensed crates (e.g., MIT/Apache-2.0, where the MIT license is explicitly elected).
+Banned: Apache-2.0-only, GPL, LGPL, AGPL, or any copyleft/weak-copyleft licenses.
+Enforcement: The project will include a deny.toml configuration for cargo-deny in CI to automatically fail the build if a transitive dependency violates this rule.
+3. Core Architecture
+Unlike Criterion, which hardcodes wall-clock time, tpt-benchmark decouples the execution loop from the measurement probes.
+3.1 The Core Traits
+/// The execution context passed to the benchmark function.
+pub struct Bencher<'a> { /* ... */ }
+
+/// A probe that measures a specific metric during the benchmark loop.
+pub trait MeasurementLayer: Send + Sync {
+    type Sample: SampleData;
+    
+    /// Called once before the batch of iterations begins.
+    fn start_batch(&mut self);
+    /// Called after the batch finishes.
+    fn end_batch(&mut self) -> Self::Sample;
+}
+
+/// Responsible for analyzing samples and determining when to stop.
+pub trait StatisticalEngine {
+    /// Returns true if we have enough data to meet the confidence threshold.
+    fn should_stop(&self, samples: &[Sample]) -> bool;
+}
+3.2 The Execution Loop (Zero-Overhead Design)
+To make it faster, the framework uses Batched Iterations (inspired by Divan). Instead of measuring every single iteration (which adds measurement overhead), it runs 
+N
+N iterations in a tight loop, measures the batch, and divides by 
+N
+N. This drops measurement overhead from ~20ns to <1ns.
+4. The Measurement Layers
+Users can activate one or multiple layers via attributes. The engine will execute the benchmark loop multiple times if necessary to satisfy all active layers.
+Layer 1: WallClock (Fast & Rigorous)
+Mechanism: Uses the CPU Time Stamp Counter (_rdtsc on x86, cntvct_el0 on ARM) for nanosecond precision, falling back to std::time::Instant.
+Use Case: General purpose, CI/CD pipelines.
+Layer 2: Allocations (Zero-Copy Proving)
+Mechanism: Injects a custom GlobalAlloc wrapper during the benchmark scope. It counts the exact number of allocation calls and the total bytes allocated.
+Use Case: Proving tpt-cv and tpt-gis zero-copy abstractions result in exactly zero heap allocations.
+Layer 3: HardwareCounters (Noise-Free Precision)
+Mechanism: Interfaces with OS-level performance APIs (perf_event_open on Linux, kperf on macOS, PMC on Windows) to read actual CPU instructions retired, L1/L2 cache misses, and branch mispredictions.
+Use Case: Proving tpt-math SIMD optimizations actually reduced CPU instructions, completely ignoring OS background noise.
+5. The "Faster" Secret: Sequential Statistical Engine
+Criterion is slow because it uses fixed sampling (e.g., "run 100 times"). tpt-benchmark uses Sequential Probability Ratio Test (SPRT) and Bayesian stopping rules.
+Adaptive Sampling: The engine starts with a small batch (e.g., 10 iterations). It calculates the variance. If the variance is low and the confidence interval is tight, it stops immediately.
+Outlier Rejection: Uses Median Absolute Deviation (MAD) to automatically detect and discard OS-jitter outliers in real-time.
+Result: Benchmarks that take 15 seconds in Criterion will take 2–3 seconds in tpt-benchmark while maintaining the exact same 95% confidence interval.
+6. API & Developer Experience
+The API is designed to be a true "one-stop shop," hiding the complex statistical engine behind clean procedural macros.
+use tpt_benchmark::{tpt_bench, tpt_bench_group, layers};
+
+// Define a parameterized benchmark group
+#[tpt_bench_group]
+#[layers(WallClock, Allocations, HardwareCounters)] // Activate all layers
+mod matrix_ops {
+    use super::*;
+
+    // Parameterized benchmark
+    #[tpt_bench(args = [128, 512, 1024, 4096])]
+    fn multiply(b: &mut Bencher, size: usize) {
+        let a = Matrix::random(size, size);
+        let b_mat = Matrix::random(size, size);
+        
+        b.iter(|| {
+            // black_box prevents LLVM dead-code elimination
+            black_box(&a).mul(black_box(&b_mat))
+        });
+    }
+}
+
+// Generates the main entry point, baseline saving, and regression detection
+tpt_benchmark::main!(matrix_ops);
+
+7. Reporting & Output
+tpt-benchmark will not rely on external tools like gnuplot. It will generate all reports natively in Rust.
+Terminal Output: Clean, colorized tables showing the delta (e.g., -14.5% in green, +5.2% in red) compared to the saved baseline.
+HTML/SVG Reports: Uses the plotters crate (which is MIT/Apache dual-licensed, we will elect MIT) to generate interactive, self-contained HTML reports showing throughput, distribution histograms, and regression slopes.
+Machine-Readable: Outputs raw statistical data to target/criterion/tpt-benchmark.json for CI integration.
+8. Implementation Roadmap
+Phase 1: The Core Engine (Weeks 1-3)
+Implement the Bencher, MeasurementLayer traits, and batched execution loop.
+Implement the WallClock layer using TSC/Instant.
+Implement the Sequential Statistical Engine (SPRT) to replace fixed sampling.
+Milestone: Can run basic time benchmarks faster than Criterion.
+Phase 2: Specialist Layers (Weeks 4-6)
+Implement the Allocations layer via a custom GlobalAlloc wrapper.
+Implement the HardwareCounters layer (starting with Linux perf_event_open, with graceful degradation on other OSs).
+Milestone: Can prove zero-allocation and instruction-level optimizations.
+Phase 3: The "One-Stop Shop" UX (Weeks 7-9)
+Develop the procedural macros (#[tpt_bench], #[tpt_bench_group]).
+Implement baseline saving, regression detection, and the JSON export format.
+Milestone: API parity with Criterion, but cleaner and more powerful.
+Phase 4: Native Reporting (Weeks 10-12)
+Integrate plotters to generate native HTML/SVG reports.
+Implement terminal output with colorized regression deltas.
+Set up cargo-deny to strictly enforce the MIT-only dependency rule.
+Milestone: v1.0.0 Release.
+Why this fits the TPT Strategy
+By building tpt-benchmark, you aren't just making a tool for yourself; you are creating the definitive benchmarking engine for the next generation of high-performance Rust. It gives you the exact mathematical proof you need to validate tpt-math and tpt-cv, while providing the community with a faster, strictly MIT-licensed, multi-layered alternative to the current fragmented ecosystem.
