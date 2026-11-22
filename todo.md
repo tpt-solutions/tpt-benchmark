@@ -30,7 +30,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] GitHub Actions: MSRV 1.85 job
 - [ ] CONTRIBUTING.md (issues-only policy), issue templates; PR template pending decision
 - [x] Choose dependency shortlist and check each licence (plotters, serde/serde_json, proc-macro2/syn/quote, libc/windows-sys, a colour crate, etc.)
-- [ ] Decide on a benchmark baseline: Criterion and Divan benchmarks of identical workloads, for the "faster than Criterion" claim
+- [x] Decide on a benchmark baseline: Criterion benchmarks of identical workloads (benches/vs_criterion.rs). Divan deferred
 
 ## Phase 1 — Core Engine (Weeks 1–3)
 - [x] Define `Bencher<'a>` and `b.iter(...)`
@@ -48,16 +48,16 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Sequential engine: running mean/variance (Welford)
 - [x] Sequential engine: confidence-interval computation (95%)
 - [x] Sequential engine: SPRT implementation
-- [ ] Sequential engine: Bayesian stopping rule
+- [ ] Sequential engine: Bayesian stopping rule. Not implemented: the precision rule is the same interval (see docs/statistics.md)
 - [x] Sequential engine: adaptive sampling (stop early when variance low and CI tight)
 - [x] Sequential engine: hard caps (max time, max samples) and min samples
 - [x] MAD-based outlier detection and real-time rejection
 - [x] Multi-layer orchestration: re-run the loop per layer when layers can't share a run
 - [x] Unit tests with known synthetic distributions; property tests for the stats
-- [ ] Validation: same 95% CI as Criterion on identical workloads
+- [ ] Validation: same 95% CI as Criterion on identical workloads. NOT MET: tpt CIs are ~2x lower than Criterion's on all 4 workloads; cause open (see docs/comparison-criterion.md)
 - [x] Validation: false-stop rate / coverage test of the SPRT
-- [ ] Benchmark vs. Criterion (wall time to reach result)
-- [ ] **Milestone:** basic time benchmarks run and are faster than Criterion
+- [x] Benchmark vs. Criterion (wall time to reach result). ~25x less wall time, but not at equal precision (see docs/comparison-criterion.md)
+- [ ] **Milestone:** basic time benchmarks run and are faster than Criterion. Faster in wall time, but the CI check failed, so not signed off
 
 ## Phase 2 — Specialist Layers (Weeks 4–6, extended for 3-OS HW support)
 ### Allocations layer
@@ -88,10 +88,10 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Helpful compile errors with spans; trybuild tests
 - [x] Re-export macros from `tpt-benchmark`
 ### API surface
-- [ ] `iter_batched`-style setup/teardown API (per-iteration and per-batch setup)
-- [ ] Throughput units (bytes/sec, elements/sec) set per benchmark
-- [ ] Async benchmarks (executor-agnostic, `b.iter(|| async {..})`), with a tested example for at least one executor
-- [x] Benchmark filtering via CLI args (name substring/regex), `--list`, `--exact`
+- [x] `iter_batched`-style setup API (per-iteration setup, excluded from timing). Teardown is not separate
+- [x] Throughput units (bytes/sec, elements/sec) set per benchmark. The rate is in the summary, not yet shown in the terminal table
+- [x] Async benchmarks (executor-agnostic: `iter_async`, `iter_async_with`). Tested with the built-in executor; a real-runtime example is still missing
+- [ ] Benchmark filtering via CLI args: substring and `--exact` done, `--list` done; regex not implemented
 - [x] CLI flags: `--save-baseline`, `--baseline`, `--noplot`, `--quick`, `--confidence`, etc.
 - [x] Compatibility with `cargo bench` and `cargo test --benches` (smoke-run mode)
 ### Baselines & regression
