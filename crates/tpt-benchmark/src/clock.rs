@@ -13,6 +13,7 @@ use std::time::{Duration, Instant};
 
 /// Which underlying counter a [`Clock`] reads.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ClockSource {
     /// x86/x86_64 time-stamp counter.
     Tsc,

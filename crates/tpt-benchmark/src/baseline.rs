@@ -32,6 +32,7 @@ pub struct Baseline {
 /// How a benchmark's layer compares with the baseline.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum Verdict {
     /// Significantly faster (lower) than the baseline.
     Improved,
@@ -228,6 +229,7 @@ mod tests {
             iters_per_batch: 1,
             stop_reason: StopReason::Converged,
             noisy: false,
+            throughput: None,
         }
     }
 

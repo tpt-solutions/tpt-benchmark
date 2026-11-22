@@ -19,6 +19,7 @@ use unsupported::Never as Backend;
 
 /// A hardware event the layer can count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Counter {
     /// Retired instructions.
     Instructions,

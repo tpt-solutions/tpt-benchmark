@@ -157,11 +157,15 @@ pub struct Summary {
     pub stop_reason: StopReason,
     /// `true` when the outlier-rate test indicated a noisy environment.
     pub noisy: bool,
+    /// Work per iteration, when the benchmark declared it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub throughput: Option<crate::throughput::Throughput>,
 }
 
 /// The condition that ended sampling.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum StopReason {
     /// The confidence interval met the relative-error target.
     Converged,

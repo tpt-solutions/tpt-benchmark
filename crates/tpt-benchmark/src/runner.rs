@@ -17,6 +17,7 @@ use crate::{json, report};
 
 /// Which measurement layer a benchmark runs under.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum LayerKind {
     /// Elapsed wall time, nanoseconds per iteration.
     WallClock,

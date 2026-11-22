@@ -199,6 +199,7 @@ mod tests {
             iters_per_batch: 1000,
             stop_reason: StopReason::Converged,
             noisy: false,
+            throughput: None,
         }
     }
 

@@ -30,6 +30,7 @@ pub struct Observations<'a> {
 
 /// Outcome of the noise-regime SPRT.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum SprtDecision {
     /// H0 accepted: the outlier rate is consistent with a clean environment.
     Clean,
@@ -180,10 +181,17 @@ impl SequentialEngine {
     fn precision_met(&self, accepted: &[f64]) -> bool {
         let w = Welford::from_slice(accepted);
         let mean = w.mean();
+        let half = ci_half_width_95(&w);
+        // Zero spread means every accepted value is identical, so the
+        // interval has no width. That is precise by definition, even when the
+        // mean is zero (e.g. a zero-allocation routine).
+        if half == 0.0 {
+            return true;
+        }
         if !mean.is_finite() || mean == 0.0 {
             return false;
         }
-        ci_half_width_95(&w) / mean.abs() <= self.rel_error
+        half / mean.abs() <= self.rel_error
     }
 }
 
@@ -288,6 +296,27 @@ mod tests {
             engine.should_stop(&obs(&accepted, &flags, 10)),
             Some(StopReason::MaxTime)
         );
+    }
+}
+
+#[cfg(test)]
+mod zero_spread {
+    use super::*;
+
+    #[test]
+    fn constant_zero_stream_converges() {
+        // A zero-allocation routine reports 0 every batch. Zero spread must
+        // count as precise, or the run would only end at the sample cap.
+        let engine = SequentialEngine::default();
+        // The SPRT needs about 31 clean draws before it accepts H0.
+        let accepted = vec![0.0; 40];
+        let flags = vec![false; 40];
+        let obs = Observations {
+            accepted: &accepted,
+            outlier_flags: &flags,
+            elapsed: Duration::ZERO,
+        };
+        assert_eq!(engine.should_stop(&obs), Some(StopReason::Converged));
     }
 }
 

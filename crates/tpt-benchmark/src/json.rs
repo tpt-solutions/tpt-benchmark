@@ -85,6 +85,7 @@ mod tests {
                 iters_per_batch: 16,
                 stop_reason: StopReason::MaxSamples,
                 noisy: true,
+                throughput: None,
             }],
         }];
         let expected = r#"{

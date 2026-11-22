@@ -45,6 +45,7 @@ mod macros;
 pub mod report;
 pub mod runner;
 mod stats;
+mod throughput;
 mod wallclock;
 
 pub use std::hint::black_box;
@@ -59,5 +60,6 @@ pub use hwcounters::{Counter, HardwareCounter, HwSample, Unavailable};
 pub use layer::{MeasurementLayer, SampleData};
 pub use runner::{BenchDef, BenchResult, LayerKind};
 pub use stats::{StopReason, Summary, Welford};
+pub use throughput::Throughput;
 pub use tpt_benchmark_macros::{layers, tpt_bench, tpt_bench_group};
 pub use wallclock::{WallClock, WallSample};
