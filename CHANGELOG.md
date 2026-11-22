@@ -9,6 +9,9 @@ minor versions may contain breaking changes.
 
 ### Added
 
+- JSON export schema 2: an `environment` block (commit, timestamp, OS, arch, CPU,
+  cores, rustc, clock source, runner). The `benchmarks` layout is unchanged, so
+  schema 1 readers keep working. See `docs/json-schema.md`.
 - `tpt-benchmark` library crate with `measure()`, `Config` and `Bencher::iter`,
   which run a routine in batches and return a `Summary` per layer.
 - `SequentialEngine` statistical engine: Welford mean and variance, 95 %

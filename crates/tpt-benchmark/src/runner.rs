@@ -290,7 +290,7 @@ pub fn main(defs: &[BenchDef]) -> ExitCode {
         report::render_terminal(&results, baseline_comparison.as_deref(), color)
     );
 
-    if let Err(err) = json::write(&dir, &results) {
+    if let Err(err) = json::write(&dir, &results, &crate::environment::Environment::capture()) {
         eprintln!("warning: could not write JSON export: {err}");
     }
     if !opts.noplot {

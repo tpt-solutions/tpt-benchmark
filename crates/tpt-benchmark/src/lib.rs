@@ -38,6 +38,7 @@ pub mod alloc;
 pub mod baseline;
 mod bencher;
 pub mod engine;
+pub mod environment;
 pub mod hwcounters;
 mod json;
 mod layer;
