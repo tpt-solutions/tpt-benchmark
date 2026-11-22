@@ -20,8 +20,8 @@ Every value is the layer's batch total divided by the batch's iteration count.
 | `min_samples` | 10 | `SequentialEngine` |
 | `max_samples` | 1000 draws | `SequentialEngine` |
 | `max_time` | 5 s of sampling | `SequentialEngine` |
-| `outlier_k` | 3.0 scaled MADs | `SequentialEngine` |
-| SPRT `p0`, `p1` | 0.01, 0.10 | `Sprt` |
+| `outlier_k` | 5.0 scaled MADs | `SequentialEngine` |
+| SPRT `p0`, `p1` | 0.02, 0.20 | `Sprt` |
 | SPRT `alpha`, `beta` | 0.05, 0.05 | `Sprt` |
 
 The runner's `--quick` flag changes three of these: warm-up 20 ms,
@@ -78,7 +78,9 @@ values so far:
   normal data. The 0.5 % floor exists because timer quantisation can make the
   MAD exactly 0. Without the floor, a value one tick away from identical
   values would be rejected.
-- **Rule.** A candidate is an outlier when `|candidate - med| > 3.0 * scale`.
+- **Rule.** A candidate is an outlier when `|candidate - med| > 5.0 * scale`.
+  Rejection starts once 20 values are accepted. Before that the MAD is too
+  noisy to use, so no draw is flagged.
   If the scale is zero, NaN or infinite, nothing is rejected.
 
 The median and MAD use only accepted values, so a rejected value does not move
@@ -115,19 +117,21 @@ The reported `ci_low` and `ci_high` are `mean ± h`.
 Wald's sequential probability ratio test runs on the stream of outlier flags
 for all draws, in arrival order. It is re-evaluated after every draw.
 
-- H0 (clean): outlier rate `p0 = 0.01`.
-- H1 (noisy): outlier rate `p1 = 0.10`.
+- H0 (clean): outlier rate `p0 = 0.02`.
+- H1 (noisy): outlier rate `p1 = 0.20`.
 - Each outlier adds `ln(p1 / p0) = ln 10 ≈ 2.303` to the log likelihood ratio.
-  Each non-outlier adds `ln((1 - p1) / (1 - p0)) ≈ -0.0953`.
+  Each non-outlier adds `ln(0.8 / 0.98) ≈ -0.2029`.
 - Lower boundary `ln(beta / (1 - alpha)) = ln(0.05 / 0.95) ≈ -2.944`. The
   stream is decided **Clean** when the sum reaches it.
 - Upper boundary `ln((1 - beta) / alpha) = ln(19) ≈ 2.944`. The stream is
   decided **Noisy** when the sum reaches it.
 - Otherwise the result is **Undecided**.
 
-On a stream with no outliers, the SPRT decides Clean after 31 draws. A stream
-where one draw in ten is an outlier drifts upward and is decided Noisy in
-time. The unit tests cover a 33 % flagged stream (Noisy), a clean stream of
+On a stream with no outliers, the SPRT decides Clean after 15 scored draws.
+A stream with an outlier rate above about 8 % drifts upward and is decided
+Noisy in time. Draws in the burn-in period (the first 20) are not scored, so
+they cannot decide the verdict. A rate between p0 and p1 leaves the verdict
+Undecided, and the run then stops at its caps. The unit tests cover a 33 % flagged stream (Noisy), a clean stream of
 300 draws (Clean) and a 2-draw stream (Undecided).
 
 The `noisy` flag in the summary is `true` whenever the verdict is not Clean.

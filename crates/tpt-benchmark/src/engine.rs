@@ -56,8 +56,8 @@ pub struct Sprt {
 impl Default for Sprt {
     fn default() -> Self {
         Self {
-            p0: 0.01,
-            p1: 0.10,
+            p0: 0.02,
+            p1: 0.20,
             alpha: 0.05,
             beta: 0.05,
         }
@@ -124,7 +124,7 @@ impl Default for SequentialEngine {
             min_samples: 10,
             max_samples: 1_000,
             max_time: Duration::from_secs(5),
-            outlier_k: 3.0,
+            outlier_k: 5.0,
             sprt: Sprt::default(),
         }
     }
@@ -173,7 +173,11 @@ impl StatisticalEngine for SequentialEngine {
     }
 
     fn noise_verdict(&self, outlier_flags: &[bool]) -> SprtDecision {
-        self.sprt.decide(outlier_flags)
+        // Draws during burn-in are never tested, so they say nothing about the
+        // environment. Scoring them as clean would let the SPRT accept H0
+        // before any real evidence exists.
+        let scored = outlier_flags.get(MIN_SAMPLES_FOR_MAD..).unwrap_or(&[]);
+        self.sprt.decide(scored)
     }
 }
 
@@ -215,7 +219,7 @@ mod tests {
 
     #[test]
     fn sprt_flags_noisy_stream() {
-        // A 30 % outlier rate is far above p1 = 0.10.
+        // A 30 % outlier rate is far above p1 = 0.20.
         let flags: Vec<bool> = (0..200).map(|i| i % 3 == 0).collect();
         assert_eq!(Sprt::default().decide(&flags), SprtDecision::Noisy);
     }
@@ -347,8 +351,8 @@ mod validation {
         assert!((0.93..=0.97).contains(&rate), "coverage = {rate}");
     }
 
-    /// On clean Gaussian data the outlier rate at 3 scaled MADs is about
-    /// 0.3 %, well under the SPRT's clean rate p0 = 1 %. Almost every stream
+    /// On clean Gaussian data the outlier rate at 5 scaled MADs is
+    /// essentially zero, well under the SPRT's clean rate p0 = 2 %. Almost every stream
     /// should therefore be accepted as clean, not flagged as noisy.
     #[test]
     fn clean_gaussian_streams_are_not_flagged_as_noisy() {
@@ -373,6 +377,15 @@ mod validation {
         }
         // Allow the SPRT's own alpha (5 %) plus slack.
         assert!(flagged_noisy <= 15, "flagged {flagged_noisy} of {streams}");
+    }
+
+    /// Burn-in draws are never outlier-tested, so twenty of them must not be
+    /// enough for the SPRT to call the environment clean.
+    #[test]
+    fn burn_in_draws_do_not_decide_the_verdict() {
+        let engine = SequentialEngine::default();
+        let flags = vec![false; MIN_SAMPLES_FOR_MAD];
+        assert_eq!(engine.noise_verdict(&flags), SprtDecision::Undecided);
     }
 
     /// A stream with 25 % outliers is clearly noisy and must be flagged.
