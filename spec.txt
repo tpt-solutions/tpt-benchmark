@@ -3,9 +3,9 @@ Design Specification: tpt-benchmark
 tpt-benchmark is a next-generation Rust benchmarking framework designed to replace Criterion, Divan, and Iai with a single, unified engine. It introduces a Layered Measurement Architecture, allowing developers to simultaneously measure wall-clock time, heap allocations, and hardware CPU counters. It utilizes Sequential Statistical Analysis to achieve Criterion-level rigor in a fraction of the execution time.
 2. Licensing & Dependency Mandate
 To ensure maximum adoption and zero legal friction for your solo-maintained TPT ecosystem, the dependency tree is strictly governed.
-Project License: MIT.
+Project License: MIT OR Apache-2.0 (dual). The MIT licence is the one elected for dependencies that are dual-licensed.
 Dependency Rule: No Apache-2.0-only dependencies.
-Allowed: MIT, BSD-2-Clause, BSD-3-Clause, ISC, Unicode-DFS, and dual-licensed crates (e.g., MIT/Apache-2.0, where the MIT license is explicitly elected).
+Allowed: MIT, BSD-2-Clause, BSD-3-Clause, ISC, Unicode-DFS-2016, Unicode-3.0, Zlib, and dual-licensed crates (e.g., MIT/Apache-2.0, where the MIT license is explicitly elected).
 Banned: Apache-2.0-only, GPL, LGPL, AGPL, or any copyleft/weak-copyleft licenses.
 Enforcement: The project will include a deny.toml configuration for cargo-deny in CI to automatically fail the build if a transitive dependency violates this rule.
 3. Core Architecture
@@ -81,7 +81,7 @@ tpt_benchmark::main!(matrix_ops);
 tpt-benchmark will not rely on external tools like gnuplot. It will generate all reports natively in Rust.
 Terminal Output: Clean, colorized tables showing the delta (e.g., -14.5% in green, +5.2% in red) compared to the saved baseline.
 HTML/SVG Reports: Uses the plotters crate (which is MIT/Apache dual-licensed, we will elect MIT) to generate interactive, self-contained HTML reports showing throughput, distribution histograms, and regression slopes.
-Machine-Readable: Outputs raw statistical data to target/criterion/tpt-benchmark.json for CI integration.
+Machine-Readable: Outputs raw statistical data to target/tpt-benchmark/tpt-benchmark.json for CI integration (schema in docs/json-schema.md).
 8. Implementation Roadmap
 Phase 1: The Core Engine (Weeks 1-3)
 Implement the Bencher, MeasurementLayer traits, and batched execution loop.
@@ -99,7 +99,7 @@ Milestone: API parity with Criterion, but cleaner and more powerful.
 Phase 4: Native Reporting (Weeks 10-12)
 Integrate plotters to generate native HTML/SVG reports.
 Implement terminal output with colorized regression deltas.
-Set up cargo-deny to strictly enforce the MIT-only dependency rule.
-Milestone: v1.0.0 Release.
+Set up cargo-deny to strictly enforce the dependency licence rule (deny.toml).
+Milestone: reports complete (v1.0.0 release is out of scope for this pass).
 Why this fits the TPT Strategy
 By building tpt-benchmark, you aren't just making a tool for yourself; you are creating the definitive benchmarking engine for the next generation of high-performance Rust. It gives you the exact mathematical proof you need to validate tpt-math and tpt-cv, while providing the community with a faster, strictly MIT-licensed, multi-layered alternative to the current fragmented ecosystem.

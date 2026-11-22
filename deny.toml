@@ -1,0 +1,39 @@
+# cargo-deny configuration. Enforces the dependency licence mandate:
+# Apache-2.0-only, GPL, LGPL, AGPL and other copyleft licences are rejected.
+# Dual-licensed crates (e.g. `MIT OR Apache-2.0`) pass because the MIT
+# licence can be elected.
+#
+# Run locally with: cargo deny check
+
+[graph]
+all-features = true
+
+[licenses]
+version = 2
+confidence-threshold = 0.93
+# Only the permissive licences listed here are accepted. `Apache-2.0` is
+# deliberately absent: an `MIT OR Apache-2.0` expression is still satisfied
+# through its MIT arm, while an Apache-2.0-only crate is rejected.
+allow = [
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "Zlib",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
