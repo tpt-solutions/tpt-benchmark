@@ -1,0 +1,5 @@
+error: `args` needs at least one value
+ --> tests/ui/fail/empty_args.rs:7:39
+  |
+7 |     #[tpt_benchmark::tpt_bench(args = [])]
+  |                                       ^^

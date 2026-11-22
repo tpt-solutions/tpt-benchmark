@@ -1,0 +1,5 @@
+error: `#[tpt_bench]` can only be applied to a function
+ --> tests/ui/fail/non_fn.rs:2:1
+  |
+2 | struct NotAFunction;
+  | ^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,5 @@
+error: unknown layer `Bogus`; expected one of WallClock, Allocations, AllocBytes, HardwareCounters, HwInstructions, HwL1Misses, HwL2Misses, HwBranchMisses
+ --> tests/ui/fail/unknown_layer.rs:4:36
+  |
+4 | #[tpt_benchmark::layers(WallClock, Bogus)]
+  |                                    ^^^^^
