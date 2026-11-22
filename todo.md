@@ -25,10 +25,10 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Verify `cargo deny` treats `MIT OR Apache-2.0` crates as OK, and Apache-2.0-only crates fail (test with a throwaway dep)
 - [x] Update spec.txt wording (MIT-only → dual MIT/Apache; output dir; plotters election note)
 - [x] `rustfmt.toml`, clippy config, `#![forbid(unsafe_code)]` where possible, document every `unsafe` block policy
-- [ ] GitHub Actions: fmt, clippy, test, doc on Linux/macOS/Windows
-- [ ] GitHub Actions: `cargo deny check` job
-- [ ] GitHub Actions: MSRV 1.85 job
-- [ ] CONTRIBUTING.md (issues-only policy), issue templates; PR template pending decision
+- [x] GitHub Actions: fmt, clippy, test, doc on Linux/macOS/Windows (`.github/workflows/ci.yml`; not yet run on GitHub)
+- [x] GitHub Actions: `cargo deny check` job
+- [x] GitHub Actions: MSRV 1.85 job
+- [x] CONTRIBUTING.md (issues-only policy), issue templates. DECIDED: no PR template, since PRs are not accepted
 - [x] Choose dependency shortlist and check each licence (plotters, serde/serde_json, proc-macro2/syn/quote, libc/windows-sys, a colour crate, etc.)
 - [x] Decide on a benchmark baseline: Criterion benchmarks of identical workloads (benches/vs_criterion.rs). DECIDED: Divan stays deferred, since the reference timer already settles accuracy
 
@@ -42,7 +42,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Measure and document timing overhead (target <1 ns per iteration amortised)
 - [x] Warm-up phase
 - [x] WallClock layer: `_rdtsc` on x86/x86_64
-- [ ] WallClock layer: `cntvct_el0` on aarch64
+- [x] WallClock layer: `cntvct_el0` on aarch64 (cross-checks for aarch64 Linux and Windows; runtime is exercised by the Apple Silicon `macos-latest` CI job)
 - [x] WallClock layer: `std::time::Instant` fallback
 - [x] TSC checks: invariant-TSC detection, frequency calibration, fallback when unreliable
 - [x] Sequential engine: running mean/variance (Welford)
