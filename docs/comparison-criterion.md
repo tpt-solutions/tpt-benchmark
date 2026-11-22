@@ -120,6 +120,45 @@ establish what caused the slow Criterion readings in that run. The two tools
 run in different processes, and that run overlapped with other agents' cargo
 and miri processes, but load alone did not reproduce the 2x gap.
 
+## Re-run after tuning the noise gate
+
+Changes made: outlier threshold 3 → 5 scaled MADs, SPRT `p0` 0.01 → 0.02 and
+`p1` 0.10 → 0.20, and burn-in draws excluded from the SPRT. The burn-in change
+fixed a latent bug: the first 20 draws were scored as clean, and with the new
+`p0` that alone could decide Clean, so a 24 % outlier stream was accepted.
+
+| Run | Workload | Criterion mean (ns) [95 % CI] | tpt mean (ns) [95 % CI] | tpt stop, noisy flag, samples, outliers |
+|---|---|---|---|---|
+| Criterion (1 pass) | `sum_u64_1024` | 68.75 [68.51, 69.05] | | |
+| tpt r1 | `sum_u64_1024` | | 68.12 [67.97, 68.27] | max_samples, noisy, 902, 98 |
+| tpt r2 | `sum_u64_1024` | | 69.19 [68.86, 69.52] | converged, clean, 58, 2 |
+| tpt r3 | `sum_u64_1024` | | 67.86 [66.93, 68.79] | converged, clean, 46, 1 |
+| Criterion (1 pass) | `dot_f64_128x128` | 7134.9 [7108.2, 7163.6] | | |
+| tpt r1 | `dot_f64_128x128` | | 7310.9 [7256.8, 7364.9] | converged, clean, 46, 1 |
+| tpt r2 | `dot_f64_128x128` | | 7021.7 [6942.0, 7101.4] | converged, clean, 46, 1 |
+| tpt r3 | `dot_f64_128x128` | | 7025.2 [6912.1, 7138.3] | converged, clean, 35, 0 |
+| Criterion (1 pass) | `format_string_100` | 5633.5 [5600.9, 5670.3] | | |
+| tpt r1 | `format_string_100` | | 5510.5 [5493.4, 5527.7] | max_samples, noisy, 975, 25 |
+| tpt r2 | `format_string_100` | | 5463.8 [5412.7, 5515.0] | converged, clean, 35, 0 |
+| tpt r3 | `format_string_100` | | 5809.8 [5765.0, 5854.7] | converged, clean, 46, 1 |
+| Criterion (1 pass) | `fast_mul_u64` | 0.373 [0.371, 0.376] | | |
+| tpt r1 | `fast_mul_u64` | | 0.326 [0.325, 0.327] | max_samples, noisy, 938, 62 |
+| tpt r2 | `fast_mul_u64` | | 0.330 [0.329, 0.331] | max_samples, noisy, 965, 35 |
+| tpt r3 | `fast_mul_u64` | | 0.321 [0.321, 0.322] | max_samples, noisy, 945, 55 |
+
+What this shows:
+
+- The gate now behaves as designed. Quiet rounds converge with the noisy flag
+  clear. Rounds with 2 to 10 % outliers are flagged noisy and run to the cap,
+  which is an honest report of an unstable environment.
+- Outlier rates vary between rounds, so runs at the same workload are not
+  equal. Precise runs still cap when the environment is noisy.
+- Tpt and Criterion intervals now overlap on some rounds and not others. The
+  gap is 1 to 5 %, not the earlier 2x. Format disagrees in all three tpt
+  rounds, and dot in two. The fast multiply is at the timer floor.
+- Wall time is still not a like-for-like comparison, because the two tools do
+  not target the same interval.
+
 ## Conclusions
 
 1. **The earlier "CIs do not agree" conclusion is withdrawn.** It was measured

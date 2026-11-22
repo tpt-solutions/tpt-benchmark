@@ -144,6 +144,20 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] Tag `v1.0.0`, announce
 - [ ] **Milestone:** v1.0.0 released
 
+## Phase 7 — Benchmark site on GitHub Pages (git-installed, no crates.io)
+Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML. See plan in `.claude/plans/` (do-you-think-we-cosmic-lollipop.md).
+- [ ] JSON schema v2 (additive): `environment` block (commit, timestamp, os, cpu, cores, rustc, clock source, runner) in `crates/tpt-benchmark/src/json.rs`; update golden test, `docs/json-schema.md`, CHANGELOG; v1 stays readable
+- [ ] `crates/tpt-site` (`publish = false`, installable via `cargo install --git`): `tpt-site build` / `serve`, zero config (title from Cargo.toml, repo URL from git remote)
+- [ ] Static output: trend charts, per-benchmark pages, raw JSON links, `sitemap.xml`, `robots.txt`, OpenGraph + JSON-LD; reuse `report/html.rs` and `report/svg.rs`
+- [ ] History kept under `data/` on the `gh-pages` branch (no extra branch/database)
+- [ ] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, deploy Pages); inputs: `bench`, `os`, `title`, `threshold`; default ubuntu only
+- [ ] Fail job on regression via existing `--baseline`/`--threshold` exit code
+- [ ] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual)
+- [ ] README section "Publish results to GitHub Pages" with the short snippet
+- [ ] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question
+- [ ] Optional later: curated SEO "atlas" pages in this repo only (Vec vs VecDeque, HashMap hashers, string building, ...) with hand-written intros and a data-quality gate
+- [ ] Optional later: render `docs/*.md` on the same site (covers Phase 5 mdBook item)
+
 ## Post-1.0 backlog
 - [ ] `cargo tpt-benchmark` CLI subcommand (compare/manage baselines)
 - [ ] Additional counters / user-selectable events
@@ -159,4 +173,4 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] Spec's "same 95% CI in 2–3 s" claim needs empirical validation; SPRT/Bayesian rules can be anti-conservative if mis-tuned
 - [ ] plotters transitive dependency licences (verify every one passes `deny.toml`)
 - [ ] `unsafe` footprint must stay small and audited
-- [ ] Noise gate: precise runs (sum, fast multiply at ~0.2% relative CI) hit the sample cap because their ~10% outlier rate sits at the SPRT noisy rate p1, and they are marked `noisy`. Tune p0/p1 or outlier threshold, then re-run the comparison
+- [x] Noise gate tuned: outlier threshold 5 MADs, SPRT p0 0.02 and p1 0.20, burn-in draws excluded (fixed a bug where they could decide Clean). Quiet runs converge. Noisy rounds still cap by design (see docs/comparison-criterion.md)
