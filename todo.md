@@ -54,10 +54,10 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] MAD-based outlier detection and real-time rejection
 - [x] Multi-layer orchestration: re-run the loop per layer when layers can't share a run
 - [x] Unit tests with known synthetic distributions; property tests for the stats
-- [ ] Validation: same 95% CI as Criterion on identical workloads. NOT MET: tpt CIs are ~2x lower than Criterion's on all 4 workloads; cause open (see docs/comparison-criterion.md)
+- [ ] Validation: same 95% CI as Criterion on identical workloads. PARTLY MET on a quiet run: sum and format overlap; dot differs by 2.6% (non-overlapping). The earlier 2x gap did not reproduce (see docs/comparison-criterion.md)
 - [x] Validation: false-stop rate / coverage test of the SPRT
 - [x] Benchmark vs. Criterion (wall time to reach result). ~25x less wall time, but not at equal precision (see docs/comparison-criterion.md)
-- [ ] **Milestone:** basic time benchmarks run and are faster than Criterion. Faster in wall time, but the CI check failed, so not signed off
+- [ ] **Milestone:** basic time benchmarks run and are faster than Criterion. Accuracy now broadly agrees; speed is not yet measured at equal precision
 
 ## Phase 2 — Specialist Layers (Weeks 4–6, extended for 3-OS HW support)
 ### Allocations layer
@@ -159,3 +159,4 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] Spec's "same 95% CI in 2–3 s" claim needs empirical validation; SPRT/Bayesian rules can be anti-conservative if mis-tuned
 - [ ] plotters transitive dependency licences (verify every one passes `deny.toml`)
 - [ ] `unsafe` footprint must stay small and audited
+- [ ] Noise gate: precise runs (sum, fast multiply at ~0.2% relative CI) hit the sample cap because their ~10% outlier rate sits at the SPRT noisy rate p1, and they are marked `noisy`. Tune p0/p1 or outlier threshold, then re-run the comparison

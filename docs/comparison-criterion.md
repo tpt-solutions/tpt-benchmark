@@ -52,7 +52,7 @@ matrices, because no matrix-vector product was specified.
 
 ## Results
 
-### Main run: 3 rounds, medians
+### Main run: 3 rounds, medians (loaded machine; its conclusions were later withdrawn)
 
 CI bounds are the median across the three rounds of each side's lower and
 upper bound (ns per iteration). Wall time is the median of the three
@@ -86,46 +86,67 @@ Criterion, to check whether the gap survived a different time window.
 An earlier standalone reference run gave 83, 7496, 6637 and 0.47 ns; it was
 taken under more load, so the later pair is the more representative one.
 
+## Investigation (re-run, quiet machine)
+
+The loaded-machine run above disagreed with the reference on every workload.
+The investigation tested whether that was a bug in either framework.
+
+- **Same code, same binary, three timers.** A scratch binary timed the sum
+  with a raw loop, with `tpt_benchmark::measure`, and with Criterion in one
+  process. Raw: 70 ns. tpt: 69 ns. Criterion: 168 ns. Changing Criterion's
+  closure body (inlining the sum) or its `black_box` (standard instead of
+  volatile) did not change its result, so the code and the harness's
+  `black_box` are not the cause.
+- **Order and time in the process.** With Criterion run first, it measured
+  68 to 72 ns, the same as the raw loop. Criterion's per-sample times in the
+  slow run were flat across sample sizes (about 157 to 188 ns), so this is not
+  a regression-slope artefact.
+- **Separate processes.** Six standalone Criterion processes measured 68 to
+  72 ns. The slow reading did not recur.
+- **Under contention.** With all 20 logical cores busy, Criterion measured
+  87 to 89 ns and tpt 67 to 71 ns. The slow reading did not recur.
+- **The real comparison benches, quiet machine.** Run as the comparison
+  itself, one full pass of each:
+
+| Workload | Criterion mean (ns) | Criterion 95% CI | tpt mean (ns) | tpt 95% CI | Overlap | tpt stop reason |
+|---|---|---|---|---|---|---|
+| `sum_u64_1024` | 67.33 | 67.08 to 67.61 | 67.35 | 67.19 to 67.51 | yes | max_samples (907) |
+| `dot_f64_128x128` | 6951 | 6931 to 6972 | 7132 | 7017 to 7247 | no (tpt 2.6% higher) | converged (31) |
+| `format_string_100` | 5427 | 5405 to 5450 | 5487 | 5408 to 5565 | yes | converged (31) |
+| `fast_mul_u64` | 0.37 | 0.37 to 0.37 | 0.32 | 0.32 to 0.32 | no, at the timer floor | max_samples (842) |
+
+The loaded-machine disagreement therefore did not reproduce. I could not
+establish what caused the slow Criterion readings in that run. The two tools
+run in different processes, and that run overlapped with other agents' cargo
+and miri processes, but load alone did not reproduce the 2x gap.
+
 ## Conclusions
 
-1. **Confidence intervals do not agree on any of the four workloads.** The
-   intervals on each side are narrow (about 1 to 3 percent wide for Criterion
-   and about 1 percent for tpt on the larger workloads), but they are at
-   different levels. Criterion is about 2.0 to 2.6 times higher than tpt on every
-   workload, in every round, including the diagnostic round.
+1. **The earlier "CIs do not agree" conclusion is withdrawn.** It was measured
+   on a loaded machine and did not reproduce on a quiet one. On the quiet run,
+   the sum and format intervals overlap. The dot product intervals do not
+   overlap, with tpt 2.6% higher. The fast multiply is at the timer floor
+   and is not meaningful.
 
-2. **The disagreement is not explained by load or by the tpt side being wrong.**
-   The reference timer, which uses neither framework, agrees with tpt to within
-   a few percent on the sum, dot product and format workloads, and to within
-   about 0.1 ns on the fast multiply. Criterion's own raw samples for the sum
-   are spread across 103 to 202 ns with a median of 168 ns, so Criterion's
-   measured loop is slower than the reference on this machine. I did not
-   identify the cause inside Criterion's harness (candidate factors: the
-   hybrid P/E core layout during its longer run, and its per-sample overhead
-   on Windows). That is an open item, not a finding.
+2. **Remaining issue in tpt: the noise gate stops convergence for precise
+   runs.** The sum and fast multiply hit the 1000-draw cap, with relative
+   intervals of 0.24% and 0.19% (far inside the 2% target). About 10% of their
+   draws were flagged as outliers, which sits right at the SPRT's noisy rate
+   p1 = 0.10. The test then returns no decision, so the run continues to the
+   cap, and the result is marked `noisy`. This is a tuning question in the
+   engine, not a measurement error. It makes runs slower and marks precise
+   results as noisy.
 
-3. **Wall time: tpt reaches its result faster on this suite.** Median process
-   wall time is about 1.8 s per tpt bench run against about 47 s for Criterion,
-   roughly 25 times less. This mostly reflects the default time budgets: the
-   Criterion defaults used here (5 s measurement and 3 s warm-up per benchmark)
-   versus tpt's adaptive stopping, which converged or hit `max_samples` in
-   about a second per workload. It is not a like-for-like comparison of
-   time-to-equal-precision, because the two frameworks do not target the same
-   interval (see point 1).
+3. **Wall time.** On the loaded run tpt took about 1.8 s per bench against
+   about 47 s for Criterion, roughly 25 times less. That mostly reflects
+   Criterion's default budgets (5 s measurement, 3 s warm-up), not equal
+   precision. On the quiet run the sum and format benches stopped after 907
+   and 31 draws respectively. A fair time-to-precision comparison needs both
+   tools set to the same target interval.
 
-4. **Is "faster than Criterion" supported?** Only partly, and only on the wall
-   time measure. On this machine tpt finished the suite about 25 times faster
-   in wall time. Its per-iteration numbers also match the independent reference
-   more closely than Criterion's do, so the intervals disagree with Criterion
-   rather than validating it. The claim "same 95% CI as Criterion" is **not**
-   supported by this run. The accuracy claim should be stated against a
-   reference, not against Criterion.
-
-5. **Stop reasons matter.** Several tpt runs ended at `max_samples` rather
-   than `converged` (dot product and format in round 3; fast multiply in
-   rounds 1 and 2). Those intervals are not at the precision target the
-   convergence rule aims for, and the wall-time figure for them is a cap, not
-   a convergence time.
+4. **"Faster than Criterion" is not measured here.** The accuracy question is
+   settled: the two agree on the sum and format workloads. A speed claim needs
+   time-to-equal-precision, which this run does not provide.
 
 ## Divan
 
