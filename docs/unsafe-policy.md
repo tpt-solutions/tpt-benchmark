@@ -36,3 +36,10 @@
 
 The Phase 5 audit (todo.md) will re-check each block against these rules,
 run Miri where it applies, and record the results here.
+
+Miri: available (`cargo +nightly miri`). `clock::tests::instant_clock_is_monotonic`
+passes under Miri. `clock::tests::best_clock_converts_a_sleep_to_plausible_ns`
+aborts with "inline assembly is not supported", because `Clock::best()` calls
+`__cpuid` (inline asm) through `invariant_tsc_supported`. Miri cannot run the
+hardware clock path, so the `RDTSC`, `CPUID` and `CNTVCT_EL0` blocks are
+covered only by review and by the `cargo check` cross-target builds.
