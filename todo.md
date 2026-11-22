@@ -30,7 +30,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] GitHub Actions: MSRV 1.85 job
 - [ ] CONTRIBUTING.md (issues-only policy), issue templates; PR template pending decision
 - [x] Choose dependency shortlist and check each licence (plotters, serde/serde_json, proc-macro2/syn/quote, libc/windows-sys, a colour crate, etc.)
-- [x] Decide on a benchmark baseline: Criterion benchmarks of identical workloads (benches/vs_criterion.rs). Divan deferred
+- [x] Decide on a benchmark baseline: Criterion benchmarks of identical workloads (benches/vs_criterion.rs). DECIDED: Divan stays deferred, since the reference timer already settles accuracy
 
 ## Phase 1 — Core Engine (Weeks 1–3)
 - [x] Define `Bencher<'a>` and `b.iter(...)`
@@ -48,7 +48,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Sequential engine: running mean/variance (Welford)
 - [x] Sequential engine: confidence-interval computation (95%)
 - [x] Sequential engine: SPRT implementation
-- [ ] Sequential engine: Bayesian stopping rule. Not implemented: the precision rule is the same interval (see docs/statistics.md)
+- [x] Sequential engine: Bayesian stopping rule. DECIDED: not implemented. The precision rule is the same 95% interval under the reference prior (see docs/statistics.md)
 - [x] Sequential engine: adaptive sampling (stop early when variance low and CI tight)
 - [x] Sequential engine: hard caps (max time, max samples) and min samples
 - [x] MAD-based outlier detection and real-time rejection
@@ -174,3 +174,4 @@ Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML
 - [ ] plotters transitive dependency licences (verify every one passes `deny.toml`)
 - [ ] `unsafe` footprint must stay small and audited
 - [x] Noise gate tuned: outlier threshold 5 MADs, SPRT p0 0.02 and p1 0.20, burn-in draws excluded (fixed a bug where they could decide Clean). Quiet runs converge. Noisy rounds still cap by design (see docs/comparison-criterion.md)
+- [x] Noisy-round caps: DECIDED to keep the caps. They bound run time, and the `noisy` flag reports unstable runs honestly rather than hiding them behind a shorter run
