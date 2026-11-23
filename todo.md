@@ -6,7 +6,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - Project is dual-licensed MIT OR Apache-2.0 (supersedes the spec's "MIT-only").
 - Dependencies: Apache-2.0-only, GPL, LGPL, AGPL and any other copyleft are banned. Dual MIT/Apache crates are fine.
 - Workspace: `tpt-benchmark` (library) + `tpt-benchmark-macros` (proc macros).
-- HW counters on Linux, macOS and Windows in v1.0.
+- HW counters on Linux, macOS and Windows in v1.0. DECIDED: macOS and Windows ship as EXPERIMENTAL (written without working counters to test against; they degrade to `Unavailable`). Verification on real hardware stays open below.
 - Output dir: `target/tpt-benchmark/` (not `target/criterion/`). Criterion migration guide only, no compat shim.
 - CI: GitHub Actions (Linux/macOS/Windows). Publish to crates.io.
 - Extra scope beyond the spec: async benches, throughput units, `iter_batched`-style setup/teardown, CI regression exit codes.
@@ -70,8 +70,8 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 ### HardwareCounters layer
 - [x] Common abstraction: instructions retired, L1 misses, L2 misses, branch mispredictions
 - [ ] Linux: `perf_event_open` (grouped counters, multiplexing scaling, `perf_event_paranoid` handling)
-- [ ] macOS: `kperf` / kpc (private framework, requires root; handle Apple Silicon and Intel)
-- [ ] Windows: PMC via supported API (investigate ETW/PMC counters, admin rights, VM limitations). INVESTIGATED: on the dev machine (Hyper-V and VBS on) the ETW PMC source list is `ERROR_NOT_SUPPORTED` even elevated, and thread profiling returns no counters. Not implementable or testable here; see docs/hardware-counters.md. Needs a machine with the hypervisor off
+- [x] macOS: `kperf` / kpc (private framework, requires root; handle Apple Silicon and Intel). EXPERIMENTAL: `hwcounters/macos.rs`, type-checked for both Apple targets, never run. Apple Silicon and Intel event names are both tried, from memory
+- [x] Windows: PMC via supported API (investigate ETW/PMC counters, admin rights, VM limitations). EXPERIMENTAL: `hwcounters/windows.rs`; only the source query has run (it fails here as below), the counting path has not. INVESTIGATED: on the dev machine (Hyper-V and VBS on) the ETW PMC source list is `ERROR_NOT_SUPPORTED` even elevated, and thread profiling returns no counters. Not implementable or testable here; see docs/hardware-counters.md. Needs a machine with the hypervisor off
 - [x] Graceful degradation: clear warning + skip layer when counters unavailable (containers, VMs, CI, no permission)
 - [ ] Event-name mapping per CPU vendor/arch (Intel, AMD, Apple, ARM)
 - [ ] Hardware tests on real machines for each OS (not VM-only)

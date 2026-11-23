@@ -6,12 +6,22 @@ OS, the privileges of the user, and whether the machine exposes its PMU at all.
 When a counter cannot be opened, the layer reports `Unavailable` with a reason.
 The runner prints a warning and skips that layer. Nothing else fails.
 
-| OS      | Status in this build                                                 |
-|---------|----------------------------------------------------------------------|
-| Linux   | Implemented with `perf_event_open`. Needs the permissions below.     |
-| macOS   | Not implemented. kperf/kpc is a private API that needs root.         |
-| Windows | Not implemented. PMC access needs ETW or a kernel driver, and admin. |
-| Other   | Not supported.                                                       |
+| OS      | Status in this build |
+|---------|----------------------|
+| Linux   | Implemented with `perf_event_open`. Opens and degrades correctly; counts need real hardware to check. |
+| macOS   | **Experimental.** Private `kperf` frameworks, needs root. Written without a Mac; never run against real counters. |
+| Windows | **Experimental.** ETW PMC sources plus thread profiling, needs administrator. Reports unavailable on the one machine it was tried on; the counting path has never run. |
+| Other   | Not supported. |
+
+**What "experimental" means here.** The macOS and Windows backends are part of
+the 1.0 API, but they were written without being able to test them against
+working hardware counters. Treat their numbers as unverified until a run on
+real hardware says otherwise (the todo tracks that). They are built so that any
+problem, such as a missing framework, a denied call or a changed system, makes
+the layer report `Unavailable` with a reason and skip, never panic or print
+nonsense. The exception is a *changed signature* in a private macOS function,
+which cannot be detected (see below). Only the Linux backend has been checked
+as far as opening a counter.
 
 ## Linux
 
@@ -96,22 +106,68 @@ on a PMU. If the kernel multiplexes events, the delta is scaled by
 
 ## macOS
 
-kperf and kpc are private frameworks. They need root, and their interface
-changes between macOS releases. This build does not link them and reports:
+**Experimental.** `kperf` and `kperfdata` are private Apple frameworks with no
+header and no stability promise. The backend (`hwcounters/macos.rs`) finds them
+at run time with `dlopen` and each function with `dlsym`, then:
 
-> kperf (private API, root required) not implemented in this build
+1. takes the counters (`kpc_force_all_ctrs_set`), which **needs root**, so run
+   the benchmark with `sudo`;
+2. looks the event up by name in this CPU's event database (`kpep_*`), trying
+   Apple Silicon names first and Intel names after;
+3. programs and starts the counters, and reads the calling thread's counts with
+   `kpc_get_thread_counters`, subtracting a reading taken at the start of each batch.
 
-The layer is therefore unavailable on macOS, including Apple Silicon.
+Dropping the layer switches counting off and gives the counters back.
+
+What is and is not known:
+
+- It type-checks and lints for `aarch64-apple-darwin` and `x86_64-apple-darwin`.
+  It has **not been run**, so the call sequence, the function signatures and the
+  event names are from memory of how other tools use these frameworks.
+- A missing framework, a missing symbol, a missing event or a refused call all
+  give `Unavailable`. A function whose **signature changed** in a macOS release
+  is not detectable and could misbehave.
+- The counters are system-wide. While the layer is alive it takes them from
+  other users of the PMU, such as Instruments.
+- Virtual machines, including GitHub's macOS runners, are expected to hide the
+  counters, so CI can check the unavailable path but probably not real counts.
+- Which events exist differs by CPU. If none of the candidate names is in the
+  database, that counter is unavailable.
 
 ## Windows
 
-Windows exposes PMCs through ETW, kernel-mode drivers and vendor PMU
-extensions. Each needs administrator rights, and most are unavailable inside
-VMs. This build does not use private APIs and reports:
+**Experimental.** The backend (`hwcounters/windows.rs`) uses only documented
+user-mode APIs, with no driver:
 
-> hardware counters not supported on Windows in this build; see docs/hardware-counters.md
+1. enable `SeSystemProfilePrivilege` on the process token (**needs an
+   administrator**, so run from an elevated terminal);
+2. ask ETW which PMC "profile sources" the CPU offers
+   (`TraceQueryInformation`, `TraceProfileSourceListInfo`) and pick the one for
+   the event by name;
+3. start the NT Kernel Logger session and give it that source as its PMC counter
+   list (`TraceSetInformation`, `TracePmcCounterListInfo`);
+4. enable thread profiling for the calling thread and read the counter with
+   `ReadThreadProfilingData`, subtracting a reading taken at the start of each batch.
 
-Windows benchmarks can use the `Allocations`, `AllocBytes` and `WallClock`
+Starting the kernel logger is system-wide: it fails if another tool owns it, and
+it is stopped when the layer is dropped.
+
+What is and is not known:
+
+- **Step 2 has been run, and fails on the development machine.** There, Windows
+  answers with `ERROR_NOT_SUPPORTED` with or without elevation (see below), so the
+  layer reports `Unavailable` and says a hypervisor commonly causes that. That
+  path is covered by tests.
+- **Steps 3 and 4 have never run.** They follow Microsoft's documented
+  sequence from memory, including struct layouts and the counter-index
+  convention, and have not been checked against working counters.
+- The source names (`InstructionRetired`, `BranchMispredictsRetired`,
+  `LLCMisses`, ...) are from memory of `xperf -pmcsources` on Intel CPUs. There is
+  no generic L1 source, so `HwL1Misses` is always unavailable on Windows.
+- Hosted CI runners and other virtual machines are expected to hide the
+  counters.
+
+Windows benchmarks can always use the `Allocations`, `AllocBytes` and `WallClock`
 layers. See `docs/allocations.md`.
 
 ### Investigation (2026-11-23)
@@ -140,10 +196,10 @@ What this means:
   from the OS above it. That was **not confirmed**: the probe was not run with the
   hypervisor off, which would also disable WSL2 and Docker on that machine.
 
-So a Windows backend could not be developed or tested on this machine as it is
-configured, and hosted CI runners are virtual machines that are expected to hide
-the counters as well. The layer therefore keeps reporting itself as unavailable
-on Windows.
+So the counting path of the Windows backend could not be developed or tested on
+this machine as it is configured, and hosted CI runners are virtual machines
+that are expected to hide the counters as well. The experimental backend
+therefore reports itself as unavailable here, with the explanation above.
 
 ## Other platforms
 

@@ -74,6 +74,12 @@ minor versions may contain breaking changes.
 
 ### Changed
 
+- **Experimental** hardware-counter backends for macOS (private `kperf` frameworks, needs
+  root) and Windows (ETW PMC sources plus thread profiling, needs administrator). They were
+  written without working counters to test against, so their counts are unverified, and any
+  failure makes the layer report `Unavailable` with a reason. On the Windows development machine
+  the source query returns "not supported" and the layer is unavailable. See
+  `docs/hardware-counters.md`.
 - **Breaking:** the structs the library produces (`Summary`, `BenchResult`, `Comparison`,
   `Baseline`, `Environment`, `Observations`, `Unavailable` and the sample types) and the
   settings structs (`Config`, `SequentialEngine`, `Sprt`, `Options`, `BenchDef`) are

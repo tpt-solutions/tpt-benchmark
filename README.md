@@ -16,7 +16,7 @@ runs.
 |--------------------|-------------------------------------------|-----------------------------------|
 | `WallClock`        | Nanoseconds per iteration                 | All (TSC / `CNTVCT_EL0` / `Instant`) |
 | `Allocations`      | Heap allocation calls per iteration       | All, with the counting allocator installed |
-| `HardwareCounters` | Instructions, cache and branch misses     | Linux (`perf_event_open`); others degrade gracefully |
+| `HardwareCounters` | Instructions, cache and branch misses     | Linux (`perf_event_open`). **Experimental** on macOS (`sudo`) and Windows (administrator): written without hardware to verify them. Elsewhere, or when unavailable, the layer is skipped with a reason |
 
 ## Minimal example
 

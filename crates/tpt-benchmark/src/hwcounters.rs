@@ -1,21 +1,36 @@
 //! Hardware performance-counter layers (instructions, cache and branch misses).
 //!
 //! The common types and the pure helpers live here. Each OS has a backend:
-//! Linux uses `perf_event_open` (see `hwcounters/linux.rs`); macOS, Windows and
-//! other platforms report [`Unavailable`] (see `hwcounters/unsupported.rs`).
-//! Setup and permissions are documented in `docs/hardware-counters.md`.
+//! Linux uses `perf_event_open` (see `hwcounters/linux.rs`), macOS the private
+//! `kperf` frameworks (`hwcounters/macos.rs`) and Windows ETW PMC sources plus
+//! thread profiling (`hwcounters/windows.rs`). Other platforms report
+//! [`Unavailable`] (`hwcounters/unsupported.rs`).
+//!
+//! **Only the Linux backend is verified against real counters.** The macOS and
+//! Windows backends are experimental: they were written without being able to
+//! run them against working hardware counters, and they degrade to
+//! [`Unavailable`] on any failure. Setup, permissions and the status of each
+//! backend are in `docs/hardware-counters.md`.
 
 use crate::layer::{MeasurementLayer, SampleData};
 
 #[cfg(target_os = "linux")]
 mod linux;
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+mod macos;
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 mod unsupported;
+#[cfg(target_os = "windows")]
+mod windows;
 
 #[cfg(target_os = "linux")]
 use linux::Perf as Backend;
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+use macos::Kpc as Backend;
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 use unsupported::Never as Backend;
+#[cfg(target_os = "windows")]
+use windows::Pmc as Backend;
 
 /// A hardware event the layer can count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -206,6 +221,56 @@ const fn event_spec(counter: Counter) -> EventSpec {
     }
 }
 
+/// `kpep` event names that count `counter`, most specific first. The first one
+/// this CPU's event database knows is used. Apple Silicon names come first, then
+/// Intel's. **Unverified**: the names are from memory of how other tools use the
+/// database, and a counter whose names are all missing reports itself unavailable.
+#[cfg(any(test, target_os = "macos"))]
+const fn kpep_event_names(counter: Counter) -> &'static [&'static str] {
+    match counter {
+        Counter::Instructions => &["FIXED_INSTRUCTIONS", "INST_RETIRED.ANY"],
+        Counter::BranchMisses => &[
+            "BRANCH_MISPRED_NONSPEC",
+            "BRANCH_MISPREDICT",
+            "BR_MISP_RETIRED.ALL_BRANCHES",
+            "BR_INST_RETIRED.MISPRED",
+        ],
+        Counter::L1Misses => &[
+            "L1D_CACHE_MISS_LD_NONSPEC",
+            "L1D_CACHE_MISS_LD",
+            "MEM_LOAD_RETIRED.L1_MISS",
+        ],
+        Counter::L2Misses => &[
+            "L2_CACHE_MISS_LD",
+            "MEM_LOAD_RETIRED.L2_MISS",
+            "LONGEST_LAT_CACHE.MISS",
+        ],
+    }
+}
+
+/// ETW PMC profile-source names that count `counter`, most specific first,
+/// matched without regard to case. **Unverified**: these are the names `xperf
+/// -pmcsources` is remembered to print on Intel CPUs. There is no generic L1
+/// source, so `L1Misses` has none and reports itself unavailable on Windows.
+#[cfg(any(test, target_os = "windows"))]
+const fn windows_source_names(counter: Counter) -> &'static [&'static str] {
+    match counter {
+        Counter::Instructions => &["InstructionRetired"],
+        Counter::BranchMisses => &["BranchMispredictsRetired", "BranchMispredictions"],
+        Counter::L2Misses => &["LLCMisses", "CacheMisses"],
+        Counter::L1Misses => &[],
+    }
+}
+
+/// The first candidate for which `available` says yes.
+#[cfg(any(test, target_os = "macos", target_os = "windows"))]
+fn pick_first_available(
+    candidates: &'static [&'static str],
+    mut available: impl FnMut(&str) -> bool,
+) -> Option<&'static str> {
+    candidates.iter().copied().find(|name| available(name))
+}
+
 /// Scales a raw count for multiplexing: `value * enabled / running`.
 ///
 /// `enabled` and `running` are the time the event was enabled and actually
@@ -324,6 +389,27 @@ mod tests {
     }
 
     #[test]
+    fn candidate_names_are_ordered_and_pick_the_first_available() {
+        for counter in [
+            Counter::Instructions,
+            Counter::L1Misses,
+            Counter::L2Misses,
+            Counter::BranchMisses,
+        ] {
+            assert!(!kpep_event_names(counter).is_empty(), "{counter:?}");
+        }
+        // No generic L1 source exists on Windows, so that counter is unavailable there.
+        assert!(windows_source_names(Counter::L1Misses).is_empty());
+        let names = kpep_event_names(Counter::Instructions);
+        assert_eq!(pick_first_available(names, |_| true), Some(names[0]));
+        assert_eq!(
+            pick_first_available(names, |n| n == "INST_RETIRED.ANY"),
+            Some("INST_RETIRED.ANY")
+        );
+        assert_eq!(pick_first_available(names, |_| false), None);
+    }
+
+    #[test]
     fn unavailable_is_a_displayable_error() {
         fn fails() -> Result<(), Box<dyn std::error::Error>> {
             Err(Unavailable {
@@ -350,24 +436,21 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "windows")]
+    /// The macOS and Windows backends are experimental. Where counters really
+    /// are available this opens one; otherwise the reason names the layer and
+    /// says the backend is experimental, instead of failing silently.
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     #[test]
-    fn windows_reports_the_documented_reason() {
-        let err = HardwareCounter::try_new(Counter::Instructions).expect_err("unsupported");
-        assert_eq!(
-            err.reason,
-            "hardware counters not supported on Windows in this build; see docs/hardware-counters.md"
-        );
-    }
-
-    #[cfg(target_os = "macos")]
-    #[test]
-    fn macos_reports_the_documented_reason() {
-        let err = HardwareCounter::try_new(Counter::Instructions).expect_err("unsupported");
-        assert_eq!(
-            err.reason,
-            "kperf (private API, root required) not implemented in this build"
-        );
+    fn experimental_backends_explain_themselves_when_unavailable() {
+        if let Err(err) = HardwareCounter::try_new(Counter::Instructions) {
+            assert!(err.reason.contains("HwInstructions"), "{}", err.reason);
+            assert!(err.reason.contains("experimental"), "{}", err.reason);
+            assert!(
+                err.reason.contains("docs/hardware-counters.md"),
+                "{}",
+                err.reason
+            );
+        }
     }
 
     /// Needs a Linux machine where the user may call `perf_event_open`.
