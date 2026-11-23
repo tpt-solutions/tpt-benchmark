@@ -114,6 +114,37 @@ VMs. This build does not use private APIs and reports:
 Windows benchmarks can use the `Allocations`, `AllocBytes` and `WallClock`
 layers. See `docs/allocations.md`.
 
+### Investigation (2026-11-23)
+
+A throwaway probe called the user-mode APIs Windows documents for this, on a
+Windows 11 Pro machine (build 26200) with an Intel Core i7-12700 and bare-metal
+hardware, but with Hyper-V present and virtualization-based security running
+(it hosts WSL2 and Docker). It was run twice, once as a normal user and once
+from an elevated (administrator) terminal. The results were identical:
+
+| Call | Result |
+|------|--------|
+| `TraceQueryInformation(TraceProfileSourceListInfo)`, the list of PMC sources ETW can record | Win32 error 50, `ERROR_NOT_SUPPORTED`, with and without elevation |
+| `EnableThreadProfiling` with hardware counters requested | Succeeds, but `ReadThreadProfilingData` reports `HwCountersCount = 0` |
+| `QueryThreadCycleTime` | Works, and returns thread CPU cycles |
+
+What this means:
+
+- Administrator rights are not what blocks it: the elevated run failed the same
+  way, with "not supported" rather than "access denied".
+- With no PMC sources listed, there is nothing to configure in an ETW session,
+  so the ETW route (the one Windows documents for counters) was not tried further.
+- `QueryThreadCycleTime` counts cycles, not retired instructions, so it cannot
+  back the `HwInstructions` layer.
+- The likely cause is the hypervisor, which commonly hides the CPU's counters
+  from the OS above it. That was **not confirmed**: the probe was not run with the
+  hypervisor off, which would also disable WSL2 and Docker on that machine.
+
+So a Windows backend could not be developed or tested on this machine as it is
+configured, and hosted CI runners are virtual machines that are expected to hide
+the counters as well. The layer therefore keeps reporting itself as unavailable
+on Windows.
+
 ## Other platforms
 
 The layer reports "hardware counters are not supported on this platform".

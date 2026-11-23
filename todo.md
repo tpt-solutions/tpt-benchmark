@@ -71,7 +71,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Common abstraction: instructions retired, L1 misses, L2 misses, branch mispredictions
 - [ ] Linux: `perf_event_open` (grouped counters, multiplexing scaling, `perf_event_paranoid` handling)
 - [ ] macOS: `kperf` / kpc (private framework, requires root; handle Apple Silicon and Intel)
-- [ ] Windows: PMC via supported API (investigate ETW/PMC counters, admin rights, VM limitations)
+- [ ] Windows: PMC via supported API (investigate ETW/PMC counters, admin rights, VM limitations). INVESTIGATED: on the dev machine (Hyper-V and VBS on) the ETW PMC source list is `ERROR_NOT_SUPPORTED` even elevated, and thread profiling returns no counters. Not implementable or testable here; see docs/hardware-counters.md. Needs a machine with the hypervisor off
 - [x] Graceful degradation: clear warning + skip layer when counters unavailable (containers, VMs, CI, no permission)
 - [ ] Event-name mapping per CPU vendor/arch (Intel, AMD, Apple, ARM)
 - [ ] Hardware tests on real machines for each OS (not VM-only)
