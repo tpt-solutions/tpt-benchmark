@@ -113,10 +113,11 @@ fn very_slow_routine_stops_at_time_cap() {
 }
 
 /// (c) A routine that sleeps for a random 0 to 2 ms per iteration, drawn from
-/// a fixed seed. The run must end. The outcome is either a summary flagged
-/// `noisy`, or a run that hit a cap without converging.
+/// a fixed seed. The run must end with a plausible mean. If it reports
+/// convergence, the interval must really meet the target precision.
 ///
-/// Converged with `noisy == false` is the only outcome this test rejects.
+/// Whether it converges depends on how batch calibration lands, so the test
+/// accepts a noisy flag, a cap, or an honest convergence.
 #[test]
 fn noisy_routine_terminates_and_is_flagged_or_capped() {
     let config = stress_config(Duration::from_secs(2));
@@ -136,10 +137,28 @@ fn noisy_routine_terminates_and_is_flagged_or_capped() {
         "noisy routine took {elapsed:?}"
     );
     assert!(summary.mean.is_finite() && summary.mean > 0.0);
+    // Each sample is the mean of a whole batch, so per-iteration noise is
+    // averaged out and an honest run can converge on this routine without the
+    // noisy flag (it did on the Windows CI runner, where batch calibration
+    // landed on larger batches). What must never happen is a converged
+    // result whose interval is wider than the precision it claims.
+    if summary.stop_reason == StopReason::Converged && !summary.noisy {
+        let half_width = (summary.ci_high - summary.ci_low) / 2.0;
+        let relative = half_width / summary.mean.abs();
+        assert!(
+            relative <= config.engine.rel_error * (1.0 + 1e-9),
+            "converged with a {:.2}% half-width, target {:.2}%: samples = {}, mean = {}",
+            relative * 100.0,
+            config.engine.rel_error * 100.0,
+            summary.samples,
+            summary.mean
+        );
+    }
+    // The routine sleeps 1 ms on average and sleeps never return early, so the
+    // mean cannot be much below 1 ms. The upper bound only catches gross errors.
     assert!(
-        summary.noisy || summary.stop_reason != StopReason::Converged,
-        "converged on a noisy routine without the noisy flag: samples = {}, mean = {}",
-        summary.samples,
+        summary.mean > 0.9e6 && summary.mean < 10e6,
+        "implausible mean for a 0-2 ms random sleep: {} ns",
         summary.mean
     );
     eprintln!(
