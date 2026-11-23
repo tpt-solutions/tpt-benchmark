@@ -18,6 +18,7 @@ pub const FORMAT_VERSION: u32 = 1;
 
 /// A named, saved set of results.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Baseline {
     /// Format version the file was written with.
     pub format_version: u32,
@@ -48,6 +49,7 @@ pub enum Verdict {
 
 /// One benchmark layer compared against the baseline.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Comparison {
     /// Fully qualified benchmark name.
     pub name: String,

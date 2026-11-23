@@ -12,6 +12,7 @@ use std::task::{Context, Poll, Waker};
 
 /// Tunables for one measurement run.
 #[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct Config {
     /// Time spent running the routine before any sample is recorded.
     pub warmup: Duration,
@@ -22,6 +23,19 @@ pub struct Config {
     pub max_batch_iters: u64,
     /// The sequential statistical engine that decides sampling and stopping.
     pub engine: SequentialEngine,
+}
+
+impl Config {
+    setters! {
+        /// Sets the warm-up time.
+        with_warmup(warmup: Duration);
+        /// Sets the minimum duration of one batch.
+        with_min_batch(min_batch: Duration);
+        /// Sets the upper bound on iterations per batch.
+        with_max_batch_iters(max_batch_iters: u64);
+        /// Sets the statistical engine settings.
+        with_engine(engine: SequentialEngine);
+    }
 }
 
 impl Default for Config {

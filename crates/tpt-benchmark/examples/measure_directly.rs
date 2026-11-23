@@ -10,10 +10,8 @@ use std::time::Duration;
 use tpt_benchmark::{Config, StopReason, WallClock, black_box, measure};
 
 fn main() {
-    let config = Config {
-        warmup: Duration::from_millis(50),
-        ..Config::default()
-    };
+    // `Config` is `#[non_exhaustive]`, so settings are changed with `with_*`.
+    let config = Config::default().with_warmup(Duration::from_millis(50));
     let summary = measure(&config, WallClock::new(), |b| {
         let data: Vec<u64> = (0..1024).collect();
         b.iter(|| black_box(&data).iter().sum::<u64>());

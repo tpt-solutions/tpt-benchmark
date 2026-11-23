@@ -5,6 +5,7 @@ use crate::layer::{MeasurementLayer, SampleData};
 
 /// Elapsed wall time for one batch, in nanoseconds.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct WallSample {
     /// Total nanoseconds for the batch.
     pub ns: f64,

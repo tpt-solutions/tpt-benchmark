@@ -29,6 +29,7 @@ const NOT_INSTALLED: &str = "counting allocator is not installed; add \
 
 /// Allocation call count for one batch.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct AllocSample {
     /// Allocation calls in the batch (`alloc`, `alloc_zeroed` and `realloc`).
     pub count: f64,
@@ -42,6 +43,7 @@ impl SampleData for AllocSample {
 
 /// Bytes requested for one batch.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct AllocBytesSample {
     /// Bytes requested in the batch. `realloc` counts its new size, so this
     /// is gross bytes requested, not net bytes retained.

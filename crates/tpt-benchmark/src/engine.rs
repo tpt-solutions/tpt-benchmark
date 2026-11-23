@@ -19,6 +19,7 @@ use crate::stats::{StopReason, Welford, ci_half_width_95, median, scaled_mad};
 
 /// Everything the engine may consult when deciding whether to stop.
 #[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
 pub struct Observations<'a> {
     /// Per-iteration values of accepted samples, in arrival order.
     pub accepted: &'a [f64],
@@ -42,6 +43,7 @@ pub enum SprtDecision {
 
 /// Parameters for Wald's SPRT on the outlier indicator stream.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct Sprt {
     /// Outlier rate under H0 (clean).
     pub p0: f64,
@@ -51,6 +53,19 @@ pub struct Sprt {
     pub alpha: f64,
     /// Type II error bound.
     pub beta: f64,
+}
+
+impl Sprt {
+    setters! {
+        /// Sets the outlier rate under H0 (clean).
+        with_p0(p0: f64);
+        /// Sets the outlier rate under H1 (noisy).
+        with_p1(p1: f64);
+        /// Sets the type I error bound.
+        with_alpha(alpha: f64);
+        /// Sets the type II error bound.
+        with_beta(beta: f64);
+    }
 }
 
 impl Default for Sprt {
@@ -87,8 +102,32 @@ impl Sprt {
     }
 }
 
+mod private {
+    /// Prevents implementations outside this crate.
+    pub trait Sealed {}
+}
+
+impl private::Sealed for SequentialEngine {}
+
 /// Decides outlier status and when sampling should stop.
-pub trait StatisticalEngine {
+///
+/// This trait is sealed. The sampling loop always uses [`Config::engine`](crate::Config::engine),
+/// a [`SequentialEngine`], so an engine of your own could not be plugged in,
+/// and freezing the signatures before that is possible would only limit later
+/// changes. Unsealing it later is not a breaking change.
+///
+/// ```compile_fail
+/// use tpt_benchmark::engine::{Observations, SprtDecision, StatisticalEngine};
+/// use tpt_benchmark::StopReason;
+///
+/// struct Mine;
+/// impl StatisticalEngine for Mine {
+///     fn is_outlier(&self, _: &[f64], _: f64) -> bool { false }
+///     fn should_stop(&self, _: &Observations<'_>) -> Option<StopReason> { None }
+///     fn noise_verdict(&self, _: &[bool]) -> SprtDecision { SprtDecision::Clean }
+/// }
+/// ```
+pub trait StatisticalEngine: private::Sealed {
     /// Returns `true` if `candidate` should be rejected, given the samples
     /// accepted so far.
     fn is_outlier(&self, accepted: &[f64], candidate: f64) -> bool;
@@ -102,6 +141,7 @@ pub trait StatisticalEngine {
 
 /// The default engine: MAD rejection, precision stopping, SPRT noise gate.
 #[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct SequentialEngine {
     /// Target relative half-width of the 95 % CI, e.g. `0.02` for ±2 %.
     pub rel_error: f64,
@@ -115,6 +155,23 @@ pub struct SequentialEngine {
     pub outlier_k: f64,
     /// Parameters for the noise-regime SPRT.
     pub sprt: Sprt,
+}
+
+impl SequentialEngine {
+    setters! {
+        /// Sets the target relative half-width of the 95 % interval.
+        with_rel_error(rel_error: f64);
+        /// Sets the minimum accepted samples before precision stopping may fire.
+        with_min_samples(min_samples: u64);
+        /// Sets the maximum total draws (accepted plus rejected).
+        with_max_samples(max_samples: u64);
+        /// Sets the maximum wall time spent sampling.
+        with_max_time(max_time: Duration);
+        /// Sets the outlier threshold in scaled MADs.
+        with_outlier_k(outlier_k: f64);
+        /// Sets the noise-regime SPRT parameters.
+        with_sprt(sprt: Sprt);
+    }
 }
 
 impl Default for SequentialEngine {

@@ -141,6 +141,7 @@ where
 
 /// Summary statistics for one measured layer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Summary {
     /// Name of the layer that produced the samples, e.g. `"WallClock"`.
     pub layer: String,

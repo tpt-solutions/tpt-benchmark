@@ -34,13 +34,23 @@ pub enum Counter {
 
 /// Why a hardware counter cannot be used on this machine.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Unavailable {
     /// Human-readable reason, shown in the runner's skip warning.
     pub reason: String,
 }
 
+impl std::fmt::Display for Unavailable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.reason)
+    }
+}
+
+impl std::error::Error for Unavailable {}
+
 /// One batch's hardware event count.
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct HwSample {
     /// Events counted during the batch, scaled for counter multiplexing.
     pub count: f64,
@@ -311,6 +321,17 @@ mod tests {
         let reason = open_failure_reason(Counter::L2Misses, &Error::from(ErrorKind::NotFound));
         assert!(reason.contains("Virtual machines"), "{reason}");
         assert!(reason.contains("HwL2Misses"), "{reason}");
+    }
+
+    #[test]
+    fn unavailable_is_a_displayable_error() {
+        fn fails() -> Result<(), Box<dyn std::error::Error>> {
+            Err(Unavailable {
+                reason: "no pmu".to_owned(),
+            })?;
+            Ok(())
+        }
+        assert_eq!(fails().unwrap_err().to_string(), "no pmu");
     }
 
     #[test]

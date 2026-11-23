@@ -32,7 +32,7 @@ struct Export<'a> {
 /// # Errors
 ///
 /// Returns an error if serialisation fails.
-pub fn to_string(results: &[BenchResult], environment: &Environment) -> io::Result<String> {
+pub(crate) fn to_string(results: &[BenchResult], environment: &Environment) -> io::Result<String> {
     let doc = Export {
         schema_version: SCHEMA_VERSION,
         tool: "tpt-benchmark",
@@ -48,7 +48,11 @@ pub fn to_string(results: &[BenchResult], environment: &Environment) -> io::Resu
 /// # Errors
 ///
 /// Returns an error if the directory or file cannot be written.
-pub fn write(dir: &Path, results: &[BenchResult], environment: &Environment) -> io::Result<()> {
+pub(crate) fn write(
+    dir: &Path,
+    results: &[BenchResult],
+    environment: &Environment,
+) -> io::Result<()> {
     fs::create_dir_all(dir)?;
     fs::write(dir.join(FILE_NAME), to_string(results, environment)?)
 }

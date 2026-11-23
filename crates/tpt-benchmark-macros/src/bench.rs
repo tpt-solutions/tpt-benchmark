@@ -323,12 +323,12 @@ pub(crate) fn expand_group_module(
             let name = &target.name;
             let kinds = bench.layers.iter().map(|layer| layer.kind_path());
             defs.push(quote! {
-                ::tpt_benchmark::BenchDef {
-                    group: #group_name,
-                    name: #name,
-                    layers: &[#(#kinds),*],
-                    run: #run,
-                }
+                ::tpt_benchmark::BenchDef::new(
+                    #group_name,
+                    #name,
+                    &[#(#kinds),*],
+                    #run,
+                )
             });
         }
     }

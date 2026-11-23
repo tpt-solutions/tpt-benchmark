@@ -15,15 +15,11 @@ use tpt_benchmark::{Clock, Config, StopReason, Summary, WallClock, measure};
 /// A configuration with a short warm-up and batch calibration target, and the
 /// given sampling time cap.
 fn stress_config(max_time: Duration) -> Config {
-    Config {
-        warmup: Duration::from_millis(5),
-        min_batch: Duration::from_millis(1),
-        max_batch_iters: 1 << 24,
-        engine: SequentialEngine {
-            max_time,
-            ..SequentialEngine::default()
-        },
-    }
+    Config::default()
+        .with_warmup(Duration::from_millis(5))
+        .with_min_batch(Duration::from_millis(1))
+        .with_max_batch_iters(1 << 24)
+        .with_engine(SequentialEngine::default().with_max_time(max_time))
 }
 
 /// A small deterministic generator (xorshift64*) for the noisy routine.

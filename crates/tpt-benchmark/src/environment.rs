@@ -13,6 +13,7 @@ use crate::clock::{Clock, ClockSource};
 
 /// Where and when a run happened.
 #[derive(Clone, Debug, Serialize)]
+#[non_exhaustive]
 pub struct Environment {
     /// Git commit hash (`GITHUB_SHA`, else `git rev-parse HEAD`).
     pub commit: Option<String>,

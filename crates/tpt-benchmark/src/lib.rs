@@ -26,10 +26,7 @@
 //! use std::time::Duration;
 //! use tpt_benchmark::{black_box, measure, Config, WallClock};
 //!
-//! let config = Config {
-//!     warmup: Duration::from_millis(1),
-//!     ..Config::default()
-//! };
+//! let config = Config::default().with_warmup(Duration::from_millis(1));
 //! let summary = measure(&config, WallClock::new(), |b| {
 //!     b.iter(|| black_box(3_u64).wrapping_mul(7));
 //! });
@@ -46,6 +43,21 @@
 #![warn(missing_debug_implementations)]
 #![deny(missing_docs)]
 
+/// Generates consuming `with_*` setters, so a `#[non_exhaustive]` settings
+/// struct can still be configured in one expression.
+macro_rules! setters {
+    ($($(#[$meta:meta])* $name:ident($field:ident: $ty:ty);)*) => {
+        $(
+            $(#[$meta])*
+            #[must_use]
+            pub fn $name(mut self, $field: $ty) -> Self {
+                self.$field = $field;
+                self
+            }
+        )*
+    };
+}
+
 #[allow(unsafe_code)]
 mod clock;
 
@@ -55,7 +67,7 @@ mod bencher;
 pub mod engine;
 pub mod environment;
 pub mod hwcounters;
-mod json;
+pub mod json;
 mod layer;
 mod macros;
 pub mod report;

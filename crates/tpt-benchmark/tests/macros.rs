@@ -62,14 +62,9 @@ fn bench_functions_remain_callable() {
 }
 
 fn quick_config() -> Config {
-    Config {
-        warmup: Duration::from_millis(1),
-        engine: SequentialEngine {
-            max_time: Duration::from_millis(200),
-            ..SequentialEngine::default()
-        },
-        ..Config::default()
-    }
+    Config::default()
+        .with_warmup(Duration::from_millis(1))
+        .with_engine(SequentialEngine::default().with_max_time(Duration::from_millis(200)))
 }
 
 fn find<'a>(defs: &'a [BenchDef], name: &str) -> &'a BenchDef {

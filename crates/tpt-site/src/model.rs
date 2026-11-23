@@ -5,6 +5,7 @@ use std::io;
 use std::path::Path;
 
 use serde::Deserialize;
+use tpt_benchmark::json::SCHEMA_VERSION;
 use tpt_benchmark::runner::BenchResult;
 
 /// Machine and build a run was measured on. Every field is optional so a
@@ -63,9 +64,9 @@ pub struct Run {
 /// stands in for the timestamp.
 pub fn parse(text: &str, file: &str, fallback_time: &str) -> Result<Run, String> {
     let doc: Document = serde_json::from_str(text).map_err(|e| format!("{file}: {e}"))?;
-    if doc.schema_version > 2 {
+    if doc.schema_version > SCHEMA_VERSION {
         return Err(format!(
-            "{file}: schema version {} is newer than this tpt-site understands (2)",
+            "{file}: schema version {} is newer than this tpt-site understands ({SCHEMA_VERSION})",
             doc.schema_version
         ));
     }

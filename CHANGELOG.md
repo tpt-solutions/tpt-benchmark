@@ -74,6 +74,17 @@ minor versions may contain breaking changes.
 
 ### Changed
 
+- **Breaking:** the structs the library produces (`Summary`, `BenchResult`, `Comparison`,
+  `Baseline`, `Environment`, `Observations`, `Unavailable` and the sample types) and the
+  settings structs (`Config`, `SequentialEngine`, `Sprt`, `Options`, `BenchDef`) are
+  `#[non_exhaustive]`, so fields can be added without a major release. Build settings with
+  the new `with_*` methods, for example `Config::default().with_warmup(..)`; struct
+  expressions are no longer allowed outside the crate.
+- **Breaking:** `StatisticalEngine` is sealed, because the sampling loop can only use
+  `SequentialEngine`. `BenchDef` is built with `BenchDef::new`, which the macros now call.
+- `Unavailable` implements `Display` and `Error`. `tpt_benchmark::json` is public and exposes
+  `SCHEMA_VERSION` and `FILE_NAME`, as `docs/json-schema.md` already said.
+- See `docs/api-review.md` for the review, the open questions and the proposed stability policy.
 - **Breaking:** `MeasurementLayer` no longer requires `Send + Sync`. The framework never
   moves a layer between threads, and a hardware counter follows the thread that opened
   it. `HardwareCounter` is now neither `Send` nor `Sync` on every platform.

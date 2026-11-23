@@ -545,24 +545,24 @@ fn write_benchmark_page(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tpt_benchmark::StopReason;
 
     fn summary(mean: f64, lo: f64, hi: f64) -> Summary {
-        Summary {
-            layer: WALL.to_owned(),
-            mean,
-            std_dev: 1.0,
-            median: mean,
-            ci_low: lo,
-            ci_high: hi,
-            samples: 10,
-            values: vec![mean],
-            outliers: 0,
-            iters_per_batch: 1,
-            stop_reason: StopReason::Converged,
-            noisy: false,
-            throughput: None,
-        }
+        // `Summary` is `#[non_exhaustive]`, so build it the way a real export does.
+        serde_json::from_value(serde_json::json!({
+            "layer": WALL,
+            "mean": mean,
+            "std_dev": 1.0,
+            "median": mean,
+            "ci_low": lo,
+            "ci_high": hi,
+            "samples": 10,
+            "values": [mean],
+            "outliers": 0,
+            "iters_per_batch": 1,
+            "stop_reason": "converged",
+            "noisy": false,
+        }))
+        .unwrap()
     }
 
     #[test]
