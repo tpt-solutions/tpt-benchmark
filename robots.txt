@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tpt-solutions.github.io/tpt-benchmark/sitemap.xml
