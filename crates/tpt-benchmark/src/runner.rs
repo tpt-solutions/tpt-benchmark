@@ -4,7 +4,7 @@
 //! of [`BenchDef`]s generated from the `#[tpt_bench]` attributes.
 
 use std::io::{self, IsTerminal, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -110,7 +110,7 @@ pub struct BenchResult {
 ///
 /// `progress` receives one line per benchmark and layer, and is typically
 /// stderr. Pass `None` to run silently.
-pub fn run_benches(
+pub(crate) fn run_benches(
     defs: &[BenchDef],
     config: &Config,
     mut progress: Option<&mut dyn Write>,
@@ -144,7 +144,7 @@ pub fn run_benches(
 /// Parsed command-line options.
 #[derive(Clone, Debug, Default, PartialEq)]
 #[non_exhaustive]
-pub struct Options {
+pub(crate) struct Options {
     /// Positional filter: run only benchmarks whose name contains this text.
     pub filter: Option<String>,
     /// With `filter`, require an exact name match instead of a substring.
@@ -242,7 +242,7 @@ where
 /// Honours `CARGO_TARGET_DIR` when it is set, and otherwise uses `target/`
 /// relative to the working directory, which is where `cargo bench` runs.
 #[must_use]
-pub fn output_dir() -> PathBuf {
+pub(crate) fn output_dir() -> PathBuf {
     let target =
         std::env::var_os("CARGO_TARGET_DIR").map_or_else(|| PathBuf::from("target"), PathBuf::from);
     target.join("tpt-benchmark")
@@ -336,12 +336,6 @@ pub fn main(defs: &[BenchDef]) -> ExitCode {
         return ExitCode::from(1);
     }
     ExitCode::SUCCESS
-}
-
-/// Path of a baseline file for `name`.
-#[must_use]
-pub fn baseline_path(dir: &Path, name: &str) -> PathBuf {
-    baseline::path(dir, name)
 }
 
 const HELP: &str = "\

@@ -27,28 +27,39 @@ without breaking anyone is left out until it is needed.
 Enums were already `#[non_exhaustive]` (`StopReason`, `Verdict`, `LayerKind`,
 `Counter`, `ClockSource`, `SprtDecision`, `Throughput`).
 
-## Open for the maintainer to decide before 1.0
+## Resolved after review
+
+These were the two questions that cannot be undone after 1.0, so they were
+decided before it.
+
+1. **Root re-exports.** Only re-exports that have another public path were
+   dropped: `thread_dealloc_totals`, `AllocSample`, `AllocBytesSample` and
+   `HwSample`, which stay under `alloc::` and `hwcounters::`. Nothing in the
+   tests, examples, docs or `tpt-site` used the root paths. The rest stay at the
+   root, including `WallSample` and `Welford`, because their modules are private
+   and the root is their only public path. (An earlier draft of this review said
+   all of them were reachable through modules. That was wrong for those two.)
+2. **Public plumbing.** Nothing outside the crate used `runner::run_benches`,
+   `runner::Options`, `runner::output_dir`, the whole `baseline` module, the
+   `environment` module, or `report::render_terminal` and `report::write_html`.
+   They are now crate-private. `report` stays public but `#[doc(hidden)]`,
+   because it still holds `report::site_support` for `tpt-site`. The unused
+   `runner::baseline_path` wrapper was deleted. The public modules are now
+   `alloc`, `engine`, `hwcounters`, `json` (two constants) and `runner`
+   (`main`, `BenchDef`, `BenchResult`, `LayerKind`). Making any of the hidden
+   items public again later is not a breaking change.
+
+## Still open for the maintainer
 
 These are judgement calls, so they were not changed.
 
-1. **Root re-exports.** The crate root re-exports `thread_dealloc_totals`,
-   `Welford`, `HwSample`, `WallSample`, `AllocSample`, `AllocBytesSample` and
-   `Counter`, which are also reachable through their modules. A re-export can be
-   added later but not removed, so the cautious choice is to drop the ones the
-   README and examples do not use from the root. That would break existing
-   `tpt_benchmark::{..}` imports.
-2. **Public modules with plumbing.** `runner` (`Options`, `run_benches`,
-   `output_dir`, `baseline_path`, `main`), `baseline` (`save`, `load`, `compare`,
-   `path`, `FORMAT_VERSION`) and `environment` are public. Only `runner::main`
-   and `runner::BenchResult` are needed by the macros and `tpt-site`. The rest
-   could be `pub(crate)` or `#[doc(hidden)]` until there is a use for it.
-3. **`SampleData: Copy + Send + Sync + 'static`.** This constrains custom
+1. **`SampleData: Copy + Send + Sync + 'static`.** This constrains custom
    layers. It is probably stricter than needed now that layers are no longer
    `Send`. Loosening it later is not breaking, so it can wait.
-4. **Layer units.** Custom layers have only a name, so the report shows their
+2. **Layer units.** Custom layers have only a name, so the report shows their
    values as `value/iter`. A unit method with a default implementation can be
    added later without breaking anyone, so no change is needed now.
-5. **`Welford` and `Sprt::decide`.** Both are public building blocks with no
+3. **`Welford` and `Sprt::decide`.** Both are public building blocks with no
    other use in the API. Keep them only if they are meant to be supported.
 
 ## Proposed stability policy

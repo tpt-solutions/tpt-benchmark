@@ -62,14 +62,15 @@ macro_rules! setters {
 mod clock;
 
 pub mod alloc;
-pub mod baseline;
+mod baseline;
 mod bencher;
 pub mod engine;
-pub mod environment;
+mod environment;
 pub mod hwcounters;
 pub mod json;
 mod layer;
 mod macros;
+#[doc(hidden)]
 pub mod report;
 pub mod runner;
 mod stats;
@@ -78,13 +79,10 @@ mod wallclock;
 
 pub use std::hint::black_box;
 
-pub use alloc::{
-    AllocBytes, AllocBytesSample, AllocSample, Allocations, CountingAllocator,
-    thread_dealloc_totals,
-};
+pub use alloc::{AllocBytes, Allocations, CountingAllocator};
 pub use bencher::{Bencher, Config, measure};
 pub use clock::{Clock, ClockSource};
-pub use hwcounters::{Counter, HardwareCounter, HwSample, Unavailable};
+pub use hwcounters::{Counter, HardwareCounter, Unavailable};
 pub use layer::{MeasurementLayer, SampleData};
 pub use runner::{BenchDef, BenchResult, LayerKind};
 pub use stats::{StopReason, Summary, Welford};

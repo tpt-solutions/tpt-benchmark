@@ -26,7 +26,7 @@ use crate::stats::Summary;
 /// contains no escape sequences. On Windows, `color = true` also enables
 /// ANSI processing on the stdout console, if stdout is a console.
 #[must_use]
-pub fn render_terminal(
+pub(crate) fn render_terminal(
     results: &[BenchResult],
     comparison: Option<&[Comparison]>,
     color: bool,
@@ -41,7 +41,7 @@ pub fn render_terminal(
 ///
 /// Returns an error if the directory cannot be created or the file cannot be
 /// written.
-pub fn write_html(
+pub(crate) fn write_html(
     dir: &Path,
     results: &[BenchResult],
     comparison: Option<&[Comparison]>,

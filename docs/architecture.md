@@ -53,10 +53,11 @@ resulting `Summary` values and never touch the loop itself.
 | `bencher` | `Config`, `Bencher`, and `measure()`. Owns the batched loop. |
 | `engine` | `SequentialEngine` (the default `StatisticalEngine`), `Sprt`, `Observations`. Decides outliers and stop reasons. |
 | `stats` | `Welford`, Student-t critical values, `median`, `scaled_mad`, `Summary`, `StopReason`. |
-| `runner` | `BenchDef` (the generated table entry), `LayerKind`, `run_benches`, the command-line parser and `main()`. |
-| `json` | Versioned JSON export (`schema_version`, currently 1). |
-| `baseline` | Named baselines (`format_version`, currently 1), the statistical `compare()` and `Verdict`. |
-| `report` | Terminal table (colour respects `NO_COLOR` and non-TTY output) and the single-file HTML report. |
+| `runner` | `BenchDef` (the generated table entry), `LayerKind`, `BenchResult` and `main()` are public. `run_benches` and the command-line parser are crate-private. |
+| `json` | Versioned JSON export (`schema_version`, currently 2). Only `SCHEMA_VERSION` and `FILE_NAME` are public. |
+| `environment` | Crate-private. Captures the machine and build (commit, OS, CPU, rustc, clock source) for the JSON export's `environment` block. |
+| `baseline` | Crate-private. Named baselines (`format_version`, currently 1), the statistical `compare()` and `Verdict`. |
+| `report` | Crate-internal rendering: the terminal table (colour respects `NO_COLOR` and non-TTY output) and the single-file HTML report. The public part is `#[doc(hidden)]` and exists for `tpt-site`. |
 | `macros` | The `tpt_benchmark::main!` macro. The attribute macros live in the `tpt-benchmark-macros` crate and are re-exported. |
 
 ## The batched loop

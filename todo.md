@@ -132,7 +132,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] mdBook or docs pages: architecture, statistics method, layers, permissions per OS (Markdown in `docs/`, rendered by tpt-site; live once the Pages site is published)
 - [x] Criterion → tpt-benchmark migration guide (and Divan/Iai notes). Divan/Iai names are from memory of their docs and flagged as unchecked in the guide
 - [x] CHANGELOG.md; semver and stability policy. The CHANGELOG exists. The policy is written in `docs/api-review.md` as a proposal that still needs the maintainer's sign-off
-- [x] Review the public API for 1.0 stability (trait signatures, `#[non_exhaustive]`). Findings and changes are in `docs/api-review.md`; five judgement calls (root re-exports, public plumbing modules, `SampleData` bounds, layer units, `Welford`) are left open there for the maintainer
+- [x] Review the public API for 1.0 stability (trait signatures, `#[non_exhaustive]`). Findings and changes are in `docs/api-review.md`; the root re-exports and the public plumbing modules were pruned; three judgement calls (`SampleData` bounds, layer units, `Welford`/`Sprt::decide`) are left open there for the maintainer
 
 ## Phase 6 — Release v1.0.0
 - [ ] Verify crates.io name availability for `tpt-benchmark` and `tpt-benchmark-macros`

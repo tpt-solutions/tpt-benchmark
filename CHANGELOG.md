@@ -84,6 +84,11 @@ minor versions may contain breaking changes.
   `SequentialEngine`. `BenchDef` is built with `BenchDef::new`, which the macros now call.
 - `Unavailable` implements `Display` and `Error`. `tpt_benchmark::json` is public and exposes
   `SCHEMA_VERSION` and `FILE_NAME`, as `docs/json-schema.md` already said.
+- **Breaking:** the public surface is smaller. `baseline`, `environment`, `runner::run_benches`,
+  `runner::Options`, `runner::output_dir`, `report::render_terminal` and `report::write_html`
+  are crate-private, and `thread_dealloc_totals`, `AllocSample`, `AllocBytesSample` and
+  `HwSample` are no longer re-exported at the crate root (use `tpt_benchmark::alloc::` and
+  `tpt_benchmark::hwcounters::`). Nothing in the repository used them.
 - See `docs/api-review.md` for the review, the open questions and the proposed stability policy.
 - **Breaking:** `MeasurementLayer` no longer requires `Send + Sync`. The framework never
   moves a layer between threads, and a hardware counter follows the thread that opened
