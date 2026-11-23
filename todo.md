@@ -154,7 +154,7 @@ Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML
 - [x] Fail job on regression: done with `tpt-site build --threshold N --fail-on-regression` (compares with the previous run on the same machine from the stored history) instead of the `--baseline` exit code, which needs a baseline file the site does not keep
 - [x] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual). Needs a one-time repo setting: Pages from the `gh-pages` branch. Not yet run on GitHub
 - [x] README section "Publish results to GitHub Pages" with the short snippet
-- [ ] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question
+- [x] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question ("About these numbers" on the index page; the figures in it are copied from docs/comparison-criterion.md and need updating if that changes)
 - [ ] Optional later: curated SEO "atlas" pages in this repo only (Vec vs VecDeque, HashMap hashers, string building, ...) with hand-written intros and a data-quality gate
 - [ ] Optional later: render `docs/*.md` on the same site (covers Phase 5 mdBook item)
 

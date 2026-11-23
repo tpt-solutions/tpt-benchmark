@@ -23,6 +23,25 @@ nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex
 footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
 ";
 
+/// Shown on every index page. Keeps the known limits of the measurements in
+/// view instead of presenting the numbers as settled.
+const ABOUT_NUMBERS: &str = r#"<section class="caveat">
+<h2>About these numbers</h2>
+<ul>
+<li>Hosted CI runners share hardware, so timings are noisy. Compare a benchmark with its own
+earlier runs on the same machine. Runs on different machines are charted separately.</li>
+<li>Hosted runners usually expose no hardware counters, so instruction and cache figures are
+normally missing here.</li>
+<li><strong>Open question: agreement with Criterion.</strong> On identical workloads on a quiet
+machine, tpt-benchmark's 95% intervals overlapped Criterion's for two of four workloads. They did
+not overlap for the dot product, where tpt-benchmark read 2.6% higher, or for a sub-nanosecond
+multiply at the timer floor, where it read lower. An earlier 2x difference did not reproduce and
+its cause is not established. Treat absolute values as unvalidated. Details are in the
+<a href="https://github.com/tpt-solutions/tpt-benchmark/blob/master/docs/comparison-criterion.md">comparison write-up</a>.</li>
+</ul>
+</section>
+"#;
+
 pub struct Config {
     pub title: String,
     pub repo: Option<String>,
@@ -261,6 +280,7 @@ pub fn build(out: &Path, runs: &[Run], cfg: &Config) -> io::Result<Vec<String>> 
     } else {
         body.push_str("<p class=\"note\">No benchmark runs yet.</p>\n");
     }
+    body.push_str(ABOUT_NUMBERS);
     let description = format!(
         "Benchmark results and performance trends for {}, measured with tpt-benchmark.",
         cfg.title
@@ -489,6 +509,24 @@ mod tests {
             5.0,
         );
         assert_eq!(small.map(|x| x.1), Some(Verdict::Same));
+    }
+
+    #[test]
+    fn index_page_carries_the_caveats() {
+        let dir = std::env::temp_dir().join(format!("tpt-site-test-{}", std::process::id()));
+        let cfg = Config {
+            title: "demo".to_owned(),
+            repo: None,
+            base_url: None,
+            threshold_pct: 5.0,
+        };
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("data")).unwrap();
+        build(&dir, &[], &cfg).unwrap();
+        let index = fs::read_to_string(dir.join("index.html")).unwrap();
+        assert!(index.contains("Open question: agreement with Criterion"));
+        assert!(index.contains("comparison-criterion.md"));
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
