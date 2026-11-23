@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistical method</title>
+<meta name="description" content="Statistical method - tpt-benchmark documentation.">
+<meta property="og:title" content="Statistical method">
+<meta property="og:description" content="Statistical method - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/statistics.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/statistics.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Statistical method","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Statistical method</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="statistical-method">Statistical method</h1>
+<p>This document describes what the code does today, with the source of each rule.
+The implementation is in <code>crates/tpt-benchmark/src/engine.rs</code> (decisions),
+<code>src/stats.rs</code> (arithmetic) and <code>src/bencher.rs</code> (the loop that calls them).
+If this document and the code disagree, the code is right and this document
+needs fixing.</p>
+<h2 id="inputs-and-defaults">Inputs and defaults</h2>
+<p>Per-iteration values are <code>f64</code>. For the wall-clock layer they are nanoseconds.
+Every value is the layer's batch total divided by the batch's iteration count.</p>
+<table><thead><tr><th>Parameter</th><th>Default</th><th>Where</th></tr></thead><tbody>
+<tr><td><code>warmup</code></td><td>100 ms</td><td><code>Config</code></td></tr>
+<tr><td><code>min_batch</code></td><td>1 ms</td><td><code>Config</code></td></tr>
+<tr><td><code>max_batch_iters</code></td><td>2^24</td><td><code>Config</code></td></tr>
+<tr><td><code>rel_error</code></td><td>0.02 (±2 %)</td><td><code>SequentialEngine</code></td></tr>
+<tr><td><code>min_samples</code></td><td>10</td><td><code>SequentialEngine</code></td></tr>
+<tr><td><code>max_samples</code></td><td>1000 draws</td><td><code>SequentialEngine</code></td></tr>
+<tr><td><code>max_time</code></td><td>5 s of sampling</td><td><code>SequentialEngine</code></td></tr>
+<tr><td><code>outlier_k</code></td><td>5.0 scaled MADs</td><td><code>SequentialEngine</code></td></tr>
+<tr><td>SPRT <code>p0</code>, <code>p1</code></td><td>0.02, 0.20</td><td><code>Sprt</code></td></tr>
+<tr><td>SPRT <code>alpha</code>, <code>beta</code></td><td>0.05, 0.05</td><td><code>Sprt</code></td></tr>
+</tbody></table>
+<p>The runner's <code>--quick</code> flag changes three of these: warm-up 20 ms,
+<code>rel_error</code> 0.05, <code>max_time</code> 1 s.</p>
+<h2 id="loop-warm-up-and-calibration">Loop: warm-up and calibration</h2>
+<ol>
+<li>Warm-up runs the routine in batches of one iteration until <code>warmup</code> has
+elapsed. Nothing is recorded.</li>
+<li>Calibration starts at 10 iterations per batch. The count doubles until one
+batch takes at least <code>min_batch</code>, or until <code>max_batch_iters</code> is reached.
+The count is then fixed for every sample in the run.</li>
+</ol>
+<p>Dividing a batch total by a large iteration count keeps the timer's resolution
+and per-call overhead small relative to the measured quantity.</p>
+<h2 id="running-statistics-welford">Running statistics: Welford</h2>
+<p>Mean and variance of the accepted values come from Welford's online update
+(<code>Welford::push</code>):</p>
+<pre><code class="language-text">delta = x - mean
+mean  = mean + delta / n
+m2    = m2 + delta * (x - mean)
+variance = m2 / (n - 1)          (unbiased; 0 when n &lt; 2)
+</code></pre>
+<p>Welford is used instead of a running sum of squares because it does not lose
+precision when the mean is large compared with the spread. The unit test
+<code>welford_is_stable_with_large_offset</code> checks this with an offset of 10^12.</p>
+<h2 id="outlier-rejection-mad">Outlier rejection: MAD</h2>
+<p>Before a candidate is accepted, <code>is_outlier</code> compares it with the accepted
+values so far:</p>
+<ul>
+<li>
+<p><strong>Burn-in.</strong> No candidate is tested until 20 values have been accepted
+(<code>MIN_SAMPLES_FOR_MAD</code>). Until then every candidate is accepted and its flag
+is <code>false</code>. The reason is that a median and MAD computed from a handful of
+values are unstable. Early ordinary values would then be flagged, and two
+or three false flags are enough for the SPRT (below) to call a clean run
+noisy. Note that the burn-in is 20 accepted values, which is more than
+<code>min_samples</code> (10). Precision stopping can therefore fire before outlier
+rejection has started, but it still requires the SPRT to read the flags as
+clean. The draws taken during burn-in are recorded as clean flags.</p>
+</li>
+<li>
+<p><strong>Scale.</strong> With <code>med</code> the median of the accepted values:</p>
+<pre><code class="language-text">scale = max(1.4826 * median(|x - med|),  0.005 * |med|)
+</code></pre>
+<p>1.4826 makes the MAD a consistent estimate of the standard deviation for
+normal data. The 0.5 % floor exists because timer quantisation can make the
+MAD exactly 0. Without the floor, a value one tick away from identical
+values would be rejected.</p>
+</li>
+<li>
+<p><strong>Rule.</strong> A candidate is an outlier when <code>|candidate - med| &gt; 5.0 * scale</code>.
+Rejection starts once 20 values are accepted. Before that the MAD is too
+noisy to use, so no draw is flagged.
+If the scale is zero, NaN or infinite, nothing is rejected.</p>
+</li>
+</ul>
+<p>The median and MAD use only accepted values, so a rejected value does not move
+the reference. Every draw still gets a flag, and the flags are what the SPRT
+reads.</p>
+<h2 id="precision-stopping-t-interval">Precision stopping: t-interval</h2>
+<p>Let <code>n</code> be the number of accepted values, <code>s²</code> their unbiased variance and
+<code>mean</code> their mean. The 95 % half-width is</p>
+<pre><code class="language-text">h = t(n - 1) * sqrt(s² / n)
+</code></pre>
+<p><code>t</code> is the two-sided 95 % Student-t critical value from a 30-entry table for
+1 to 30 degrees of freedom (<code>T_95</code> in <code>stats.rs</code>). For more than 30 degrees of
+freedom the code uses 1.96. With fewer than two values the half-width is
+infinite, and <code>t(0)</code> is infinite.</p>
+<p>Precision is met when</p>
+<pre><code class="language-text">h / |mean| &lt;= rel_error          (default 0.02)
+</code></pre>
+<p>and it is never met when the mean is zero, NaN or infinite. See the limitation
+at the end of this section.</p>
+<p>The reported <code>ci_low</code> and <code>ci_high</code> are <code>mean ± h</code>.</p>
+<h2 id="noise-regime-sprt">Noise regime: SPRT</h2>
+<p>Wald's sequential probability ratio test runs on the stream of outlier flags
+for all draws, in arrival order. It is re-evaluated after every draw.</p>
+<ul>
+<li>H0 (clean): outlier rate <code>p0 = 0.02</code>.</li>
+<li>H1 (noisy): outlier rate <code>p1 = 0.20</code>.</li>
+<li>Each outlier adds <code>ln(p1 / p0) = ln 10 ≈ 2.303</code> to the log likelihood ratio.
+Each non-outlier adds <code>ln(0.8 / 0.98) ≈ -0.2029</code>.</li>
+<li>Lower boundary <code>ln(beta / (1 - alpha)) = ln(0.05 / 0.95) ≈ -2.944</code>. The
+stream is decided <strong>Clean</strong> when the sum reaches it.</li>
+<li>Upper boundary <code>ln((1 - beta) / alpha) = ln(19) ≈ 2.944</code>. The stream is
+decided <strong>Noisy</strong> when the sum reaches it.</li>
+<li>Otherwise the result is <strong>Undecided</strong>.</li>
+</ul>
+<p>On a stream with no outliers, the SPRT decides Clean after 15 scored draws.
+A stream with an outlier rate above about 8 % drifts upward and is decided
+Noisy in time. Draws in the burn-in period (the first 20) are not scored, so
+they cannot decide the verdict. A rate between p0 and p1 leaves the verdict
+Undecided, and the run then stops at its caps. The unit tests cover a 33 % flagged stream (Noisy), a clean stream of
+300 draws (Clean) and a 2-draw stream (Undecided).</p>
+<p>The <code>noisy</code> flag in the summary is <code>true</code> whenever the verdict is not Clean.
+So a run that ends <strong>Undecided</strong> is reported as noisy.</p>
+<h2 id="stop-rules">Stop rules</h2>
+<p><code>SequentialEngine::should_stop</code> checks these in order, after every batch:</p>
+<ol>
+<li><strong>Converged.</strong> <code>accepted &gt;= min_samples</code>, precision is met, and the SPRT
+verdict is Clean.</li>
+<li><strong>MaxSamples.</strong> Total draws (accepted plus rejected) <code>&gt;= max_samples</code>.</li>
+<li><strong>MaxTime.</strong> Wall time spent sampling <code>&gt;= max_time</code>.</li>
+</ol>
+<p>Otherwise sampling continues. Because the caps are checked only after a batch
+finishes, a run can overrun <code>max_time</code> by up to one batch. The stop reason is
+stored in <code>Summary::stop_reason</code>.</p>
+<p>Converged always implies <code>noisy == false</code>, because the SPRT must be Clean.</p>
+<h3 id="behaviour-the-caps-imply">Behaviour the caps imply</h3>
+<ul>
+<li>A run with a very wide spread cannot meet the precision target. It ends at
+<code>MaxSamples</code> or <code>MaxTime</code>.</li>
+<li><strong>A layer whose value is always zero never converges.</strong> The mean is zero,
+so precision is never met, and the run ends at <code>MaxSamples</code> (1000 draws),
+or at <code>MaxTime</code> if that cap comes first. A zero-allocation routine therefore
+reports <code>MaxSamples</code>, not <code>Converged</code>, even though its variance is zero.
+This is a property of the current code and affects the zero-allocation use
+case. See <code>allocations.md</code> for how the allocation layers are used. It was
+reproduced with a throwaway test whose layer always reports 0 ns.</li>
+</ul>
+<h2 id="what-is-not-implemented-the-bayesian-stopping-rule">What is not implemented: the Bayesian stopping rule</h2>
+<p><code>todo.md</code> lists a Bayesian stopping rule in Phase 1, which is not done. The
+engine uses the precision rule above instead. The reason is as follows:</p>
+<ul>
+<li>The precision rule is a frequentist check: the 95 % Student-t interval must
+be narrower than the target. Its numbers are the same as the 95 % credible
+interval for the mean under the standard noninformative prior
+<code>p(mean, sigma²) ∝ 1/sigma²</code>. That is an improper prior, and this is the
+correspondence the rule relies on. It is not a flat prior on <code>sigma</code>.</li>
+<li>A Bayesian stopping rule (for example, stopping when the posterior
+probability that the mean lies within ±2 % exceeds a threshold) needs a
+choice of prior and threshold that the project has not settled. It also
+needs validation of its false-stop rate. The SPRT validation test covers
+the noise gate only.</li>
+<li>Until the Bayesian rule exists and is validated, the documentation should
+not describe the stop rule as Bayesian. The Phase 1 item stays unchecked.</li>
+</ul>
+<h2 id="validation-in-the-test-suite">Validation in the test suite</h2>
+<ul>
+<li><code>ci_coverage_is_close_to_nominal</code>: coverage of the t-interval on 30-value
+Gaussian samples over 2000 trials lies in 93 % to 97 %.</li>
+<li><code>clean_gaussian_streams_are_not_flagged_as_noisy</code>: on Gaussian data the
+SPRT flags at most 15 of 200 streams as noisy.</li>
+<li><code>heavy_outlier_stream_is_flagged_noisy</code>: a stream with a quarter of its
+values drawn from a wide uniform is flagged Noisy.</li>
+<li><code>ci_half_width_shrinks_as_one_over_root_n</code>, <code>mad_is_shift_and_scale_equivariant</code>
+and the other property tests in <code>stats.rs</code> use 200 seeded inputs.</li>
+<li>The stress tests (<code>crates/tpt-benchmark/tests/stress.rs</code>) check that very
+fast, very slow and noisy routines terminate, and state the stop reason they
+reach.</li>
+</ul>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

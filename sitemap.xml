@@ -4,4 +4,17 @@
   <url><loc>https://tpt-solutions.github.io/tpt-benchmark/b/matrix-ops-dot-128.html</loc></url>
   <url><loc>https://tpt-solutions.github.io/tpt-benchmark/b/matrix-ops-dot-512.html</loc></url>
   <url><loc>https://tpt-solutions.github.io/tpt-benchmark/b/matrix-ops-fill.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/index.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/allocations.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/architecture.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/comparison-criterion.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/dependencies.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/hardware-counters.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/json-schema.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/layers.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/migrating-from-criterion.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/release-checklist.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/statistics.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/timing-overhead.html</loc></url>
+  <url><loc>https://tpt-solutions.github.io/tpt-benchmark/docs/unsafe-policy.html</loc></url>
 </urlset>

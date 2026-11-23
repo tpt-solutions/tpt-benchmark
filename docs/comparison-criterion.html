@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tpt-benchmark vs Criterion: identical workloads</title>
+<meta name="description" content="tpt-benchmark vs Criterion: identical workloads - tpt-benchmark documentation.">
+<meta property="og:title" content="tpt-benchmark vs Criterion: identical workloads">
+<meta property="og:description" content="tpt-benchmark vs Criterion: identical workloads - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/comparison-criterion.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/comparison-criterion.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"tpt-benchmark vs Criterion: identical workloads","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>tpt-benchmark vs Criterion: identical workloads</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="tpt-benchmark-vs-criterion-identical-workloads">tpt-benchmark vs Criterion: identical workloads</h1>
+<p>This note records a head-to-head run of tpt-benchmark and Criterion 0.5.1 on
+the same four workloads, on the same machine, back to back. It answers two
+questions from <code>todo.md</code>:</p>
+<ol>
+<li>Do the two 95% confidence intervals of the mean agree for each workload?</li>
+<li>How long does each framework take to finish each workload?</li>
+</ol>
+<h2 id="method">Method</h2>
+<ul>
+<li><strong>Workloads</strong> live in <code>crates/tpt-benchmark/benches/common/workloads.rs</code> and
+are included by both benches with <code>#[path]</code>, so the measured code is the
+same source file.</li>
+<li><strong>Criterion side:</strong> <code>crates/tpt-benchmark/benches/vs_criterion.rs</code>,
+Criterion 0.5.1 with <code>default-features = false</code> (no plots, no rayon).
+Interval read from <code>target/criterion/&lt;name&gt;/new/estimates.json</code>,
+<code>mean.confidence_interval</code>.</li>
+<li><strong>tpt side:</strong> <code>crates/tpt-benchmark/benches/vs_tpt.rs</code>, <code>WallClock</code> layer only,
+default <code>Config</code>. Interval read from <code>target/tpt-benchmark/tpt-benchmark.json</code>,
+<code>ci_low</code> / <code>ci_high</code>, plus <code>stop_reason</code>.</li>
+<li><strong>Driver:</strong> <code>scripts/compare.ps1</code>. It builds both benches first with
+<code>--no-run</code> (compile time excluded), then runs <code>vs_criterion</code> and <code>vs_tpt</code>
+back to back for 3 rounds. Each <code>cargo bench</code> invocation is wall-timed with
+<code>Measure-Command</code>. Medians of the CI bounds and the spread across rounds are
+computed from the output files.</li>
+<li><strong>Reference timer (sanity check, not a framework):</strong> the same <code>workloads.rs</code>
+compiled standalone with <code>rustc -O</code> and timed with a plain <code>std::time::Instant</code>
+loop (best of five). It is only used to judge which framework's numbers look
+right; it is not a statistical method.</li>
+<li><strong>Environment:</strong> Windows 11, Intel i7-12700 (8 P-cores + 4 E-cores, hybrid),
+release/bench profile. The machine was shared with other agents' cargo and
+miri processes during the run, so the numbers carry some load noise.
+Compile times on Windows are much slower than Linux; they are excluded here.</li>
+<li><strong>Source revision:</strong> the timed runs used a snapshot of commit <code>d6280c1</code>
+(<code>git archive HEAD</code>) with this work's <code>Cargo.toml</code> and bench files overlaid.
+The live working tree had another agent's in-progress edits to
+<code>src/bencher.rs</code> that did not compile at the time, so the numbers were not
+taken from it. The snapshot's library is therefore the committed one.</li>
+</ul>
+<h3 id="workloads">Workloads</h3>
+<table><thead><tr><th>Name</th><th>Routine</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>sum_u64_1024</code></td><td>sum of a <code>Vec&lt;u64&gt;</code> of 1024 elements, input through <code>black_box</code></td><td>vectorisable integer sum</td></tr>
+<tr><td><code>dot_f64_128x128</code></td><td>dot product of two flattened 128x128 f64 matrices (16384 elements each)</td><td>scalar f64 dependency chain</td></tr>
+<tr><td><code>format_string_100</code></td><td>100 iterations of <code>format!("{}-{}", i, i * 2)</code> appended to a <code>String</code></td><td>allocates on every iteration</td></tr>
+<tr><td><code>fast_mul_u64</code></td><td><code>black_box(x).wrapping_mul(3)</code> with a fixed <code>x</code></td><td>about 0.3 to 0.7 ns, stresses timer overhead</td></tr>
+</tbody></table>
+<p>"128x128 f64 dot product" was interpreted as a dot product over the flattened
+matrices, because no matrix-vector product was specified.</p>
+<h2 id="results">Results</h2>
+<h3 id="main-run-3-rounds-medians-loaded-machine-its-conclusions-were-later-withdrawn">Main run: 3 rounds, medians (loaded machine; its conclusions were later withdrawn)</h3>
+<p>CI bounds are the median across the three rounds of each side's lower and
+upper bound (ns per iteration). Wall time is the median of the three
+<code>cargo bench</code> process wall times.</p>
+<table><thead><tr><th>Workload</th><th>Criterion 95% CI (ns)</th><th>tpt 95% CI (ns)</th><th>Overlap</th><th>Criterion wall (s)</th><th>tpt wall (s)</th><th>tpt stop_reason per round</th></tr></thead><tbody>
+<tr><td><code>sum_u64_1024</code></td><td>175.73 to 180.43</td><td>67.54 to 68.64</td><td>no</td><td>47.2</td><td>1.8</td><td>converged, converged, converged</td></tr>
+<tr><td><code>dot_f64_128x128</code></td><td>14647.67 to 14874.05</td><td>7169.41 to 7195.25</td><td>no</td><td>47.2</td><td>1.8</td><td>converged, converged, max_samples</td></tr>
+<tr><td><code>format_string_100</code></td><td>13324.12 to 13833.65</td><td>5592.80 to 5642.10</td><td>no</td><td>47.2</td><td>1.8</td><td>converged, converged, max_samples</td></tr>
+<tr><td><code>fast_mul_u64</code></td><td>0.68 to 0.69</td><td>0.31 to 0.32</td><td>no</td><td>47.2</td><td>1.8</td><td>max_samples, max_samples, converged</td></tr>
+</tbody></table>
+<p>Per-round wall times (seconds): Criterion 56.5, 47.2, 44.1; tpt 1.8, 1.8, 4.5.
+Round-to-round spread of the mean: Criterion 167.7 to 203.1 ns for the sum
+(its per-sample spread alone was 103 to 202 ns); tpt 66.8 to 70.7 ns for the
+sum. The two frameworks were each internally stable in the sense that their
+intervals did not move between rounds, but they sit at different levels.</p>
+<h3 id="diagnostic-run-2-interleaved-rounds-with-the-reference-timer">Diagnostic run: 2 interleaved rounds with the reference timer</h3>
+<p>Run directly from the built binaries, reference first, then tpt, then
+Criterion, to check whether the gap survived a different time window.</p>
+<table><thead><tr><th>Workload</th><th>Reference <code>Instant</code> loop (ns)</th><th>tpt mean (ns)</th><th>Criterion mean (ns)</th></tr></thead><tbody>
+<tr><td><code>sum_u64_1024</code></td><td>67.9 / 68.2</td><td>68.6 / 68.6</td><td>166.2 / 167.6</td></tr>
+<tr><td><code>dot_f64_128x128</code></td><td>7051 / 6852</td><td>6947 / 7236</td><td>14428 / 14926</td></tr>
+<tr><td><code>format_string_100</code></td><td>5552 / 5415</td><td>5719 / 5562</td><td>13803 / 12912</td></tr>
+<tr><td><code>fast_mul_u64</code></td><td>0.42 / 0.41</td><td>0.33 / 0.32</td><td>0.68 / 0.71</td></tr>
+</tbody></table>
+<p>An earlier standalone reference run gave 83, 7496, 6637 and 0.47 ns; it was
+taken under more load, so the later pair is the more representative one.</p>
+<h2 id="investigation-re-run-quiet-machine">Investigation (re-run, quiet machine)</h2>
+<p>The loaded-machine run above disagreed with the reference on every workload.
+The investigation tested whether that was a bug in either framework.</p>
+<ul>
+<li><strong>Same code, same binary, three timers.</strong> A scratch binary timed the sum
+with a raw loop, with <code>tpt_benchmark::measure</code>, and with Criterion in one
+process. Raw: 70 ns. tpt: 69 ns. Criterion: 168 ns. Changing Criterion's
+closure body (inlining the sum) or its <code>black_box</code> (standard instead of
+volatile) did not change its result, so the code and the harness's
+<code>black_box</code> are not the cause.</li>
+<li><strong>Order and time in the process.</strong> With Criterion run first, it measured
+68 to 72 ns, the same as the raw loop. Criterion's per-sample times in the
+slow run were flat across sample sizes (about 157 to 188 ns), so this is not
+a regression-slope artefact.</li>
+<li><strong>Separate processes.</strong> Six standalone Criterion processes measured 68 to
+72 ns. The slow reading did not recur.</li>
+<li><strong>Under contention.</strong> With all 20 logical cores busy, Criterion measured
+87 to 89 ns and tpt 67 to 71 ns. The slow reading did not recur.</li>
+<li><strong>The real comparison benches, quiet machine.</strong> Run as the comparison
+itself, one full pass of each:</li>
+</ul>
+<table><thead><tr><th>Workload</th><th>Criterion mean (ns)</th><th>Criterion 95% CI</th><th>tpt mean (ns)</th><th>tpt 95% CI</th><th>Overlap</th><th>tpt stop reason</th></tr></thead><tbody>
+<tr><td><code>sum_u64_1024</code></td><td>67.33</td><td>67.08 to 67.61</td><td>67.35</td><td>67.19 to 67.51</td><td>yes</td><td>max_samples (907)</td></tr>
+<tr><td><code>dot_f64_128x128</code></td><td>6951</td><td>6931 to 6972</td><td>7132</td><td>7017 to 7247</td><td>no (tpt 2.6% higher)</td><td>converged (31)</td></tr>
+<tr><td><code>format_string_100</code></td><td>5427</td><td>5405 to 5450</td><td>5487</td><td>5408 to 5565</td><td>yes</td><td>converged (31)</td></tr>
+<tr><td><code>fast_mul_u64</code></td><td>0.37</td><td>0.37 to 0.37</td><td>0.32</td><td>0.32 to 0.32</td><td>no, at the timer floor</td><td>max_samples (842)</td></tr>
+</tbody></table>
+<p>The loaded-machine disagreement therefore did not reproduce. I could not
+establish what caused the slow Criterion readings in that run. The two tools
+run in different processes, and that run overlapped with other agents' cargo
+and miri processes, but load alone did not reproduce the 2x gap.</p>
+<h2 id="re-run-after-tuning-the-noise-gate">Re-run after tuning the noise gate</h2>
+<p>Changes made: outlier threshold 3 → 5 scaled MADs, SPRT <code>p0</code> 0.01 → 0.02 and
+<code>p1</code> 0.10 → 0.20, and burn-in draws excluded from the SPRT. The burn-in change
+fixed a latent bug: the first 20 draws were scored as clean, and with the new
+<code>p0</code> that alone could decide Clean, so a 24 % outlier stream was accepted.</p>
+<table><thead><tr><th>Run</th><th>Workload</th><th>Criterion mean (ns) [95 % CI]</th><th>tpt mean (ns) [95 % CI]</th><th>tpt stop, noisy flag, samples, outliers</th></tr></thead><tbody>
+<tr><td>Criterion (1 pass)</td><td><code>sum_u64_1024</code></td><td>68.75 [68.51, 69.05]</td><td></td><td></td></tr>
+<tr><td>tpt r1</td><td><code>sum_u64_1024</code></td><td></td><td>68.12 [67.97, 68.27]</td><td>max_samples, noisy, 902, 98</td></tr>
+<tr><td>tpt r2</td><td><code>sum_u64_1024</code></td><td></td><td>69.19 [68.86, 69.52]</td><td>converged, clean, 58, 2</td></tr>
+<tr><td>tpt r3</td><td><code>sum_u64_1024</code></td><td></td><td>67.86 [66.93, 68.79]</td><td>converged, clean, 46, 1</td></tr>
+<tr><td>Criterion (1 pass)</td><td><code>dot_f64_128x128</code></td><td>7134.9 [7108.2, 7163.6]</td><td></td><td></td></tr>
+<tr><td>tpt r1</td><td><code>dot_f64_128x128</code></td><td></td><td>7310.9 [7256.8, 7364.9]</td><td>converged, clean, 46, 1</td></tr>
+<tr><td>tpt r2</td><td><code>dot_f64_128x128</code></td><td></td><td>7021.7 [6942.0, 7101.4]</td><td>converged, clean, 46, 1</td></tr>
+<tr><td>tpt r3</td><td><code>dot_f64_128x128</code></td><td></td><td>7025.2 [6912.1, 7138.3]</td><td>converged, clean, 35, 0</td></tr>
+<tr><td>Criterion (1 pass)</td><td><code>format_string_100</code></td><td>5633.5 [5600.9, 5670.3]</td><td></td><td></td></tr>
+<tr><td>tpt r1</td><td><code>format_string_100</code></td><td></td><td>5510.5 [5493.4, 5527.7]</td><td>max_samples, noisy, 975, 25</td></tr>
+<tr><td>tpt r2</td><td><code>format_string_100</code></td><td></td><td>5463.8 [5412.7, 5515.0]</td><td>converged, clean, 35, 0</td></tr>
+<tr><td>tpt r3</td><td><code>format_string_100</code></td><td></td><td>5809.8 [5765.0, 5854.7]</td><td>converged, clean, 46, 1</td></tr>
+<tr><td>Criterion (1 pass)</td><td><code>fast_mul_u64</code></td><td>0.373 [0.371, 0.376]</td><td></td><td></td></tr>
+<tr><td>tpt r1</td><td><code>fast_mul_u64</code></td><td></td><td>0.326 [0.325, 0.327]</td><td>max_samples, noisy, 938, 62</td></tr>
+<tr><td>tpt r2</td><td><code>fast_mul_u64</code></td><td></td><td>0.330 [0.329, 0.331]</td><td>max_samples, noisy, 965, 35</td></tr>
+<tr><td>tpt r3</td><td><code>fast_mul_u64</code></td><td></td><td>0.321 [0.321, 0.322]</td><td>max_samples, noisy, 945, 55</td></tr>
+</tbody></table>
+<p>What this shows:</p>
+<ul>
+<li>The gate now behaves as designed. Quiet rounds converge with the noisy flag
+clear. Rounds with 2 to 10 % outliers are flagged noisy and run to the cap,
+which is an honest report of an unstable environment.</li>
+<li>Outlier rates vary between rounds, so runs at the same workload are not
+equal. Precise runs still cap when the environment is noisy.</li>
+<li>Tpt and Criterion intervals now overlap on some rounds and not others. The
+gap is 1 to 5 %, not the earlier 2x. Format disagrees in all three tpt
+rounds, and dot in two. The fast multiply is at the timer floor.</li>
+<li>Wall time is still not a like-for-like comparison, because the two tools do
+not target the same interval.</li>
+</ul>
+<h2 id="conclusions">Conclusions</h2>
+<ol>
+<li>
+<p><strong>The earlier "CIs do not agree" conclusion is withdrawn.</strong> It was measured
+on a loaded machine and did not reproduce on a quiet one. On the quiet run,
+the sum and format intervals overlap. The dot product intervals do not
+overlap, with tpt 2.6% higher. The fast multiply is at the timer floor
+and is not meaningful.</p>
+</li>
+<li>
+<p><strong>Remaining issue in tpt: the noise gate stops convergence for precise
+runs.</strong> The sum and fast multiply hit the 1000-draw cap, with relative
+intervals of 0.24% and 0.19% (far inside the 2% target). About 10% of their
+draws were flagged as outliers, which sits right at the SPRT's noisy rate
+p1 = 0.10. The test then returns no decision, so the run continues to the
+cap, and the result is marked <code>noisy</code>. This is a tuning question in the
+engine, not a measurement error. It makes runs slower and marks precise
+results as noisy.</p>
+</li>
+<li>
+<p><strong>Wall time.</strong> On the loaded run tpt took about 1.8 s per bench against
+about 47 s for Criterion, roughly 25 times less. That mostly reflects
+Criterion's default budgets (5 s measurement, 3 s warm-up), not equal
+precision. On the quiet run the sum and format benches stopped after 907
+and 31 draws respectively. A fair time-to-precision comparison needs both
+tools set to the same target interval.</p>
+</li>
+<li>
+<p><strong>"Faster than Criterion" is not measured here.</strong> The accuracy question is
+settled: the two agree on the sum and format workloads. A speed claim needs
+time-to-equal-precision, which this run does not provide.</p>
+</li>
+</ol>
+<h2 id="divan">Divan</h2>
+<p>Divan is <strong>deferred</strong>, not added. Adding it would need another dev-dependency,
+another bench target and another full run for a three-way comparison, and the
+two-way result above already fails the agreement test. A Divan comparison is
+worth doing only after the Criterion interval disagreement is explained. This
+document is the only place that records the deferral; <code>todo.md</code> was not edited.</p>
+<h2 id="reproducing">Reproducing</h2>
+<pre><code class="language-powershell">pwsh -File scripts/compare.ps1 -TargetDir &lt;absolute path to a private target dir&gt; -Runs 3
+</code></pre>
+<p>Output: a table on stdout and <code>&lt;TargetDir&gt;/compare-results.json</code> with every
+round's CI, mean, stop reason and wall time. The Criterion JSON lands in
+<code>&lt;TargetDir&gt;/criterion/</code>, not <code>target/criterion/</code>, because <code>CARGO_TARGET_DIR</code> is
+set for these runs.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li>Single machine, Windows, hybrid CPU, shared with other agents' builds. No
+pinning or isolation was applied.</li>
+<li>Three rounds of the driver plus two diagnostic rounds. The spread across
+rounds is small relative to the Criterion/tpt gap, but this is not a
+statistical test of the gap.</li>
+<li>The reference timer is a single-loop <code>Instant</code> measurement, used only as a
+sanity check.</li>
+<li>Criterion was run at 0.5.1. Criterion 0.7.0 is available but was not tested.</li>
+<li>Linux was not measured.</li>
+</ul>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

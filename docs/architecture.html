@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture</title>
+<meta name="description" content="Architecture - tpt-benchmark documentation.">
+<meta property="og:title" content="Architecture">
+<meta property="og:description" content="Architecture - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/architecture.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/architecture.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Architecture","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Architecture</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="architecture">Architecture</h1>
+<p><code>tpt-benchmark</code> is split into layers that do not know about each other. A
+measurement layer reads one metric. The execution loop runs the routine in
+batches and asks the layer for a value. The statistical engine decides which
+values to keep and when to stop. The runner, reports and baselines consume the
+resulting <code>Summary</code> values and never touch the loop itself.</p>
+<h2 id="diagram">Diagram</h2>
+<pre><code class="language-text">  #[tpt_bench] / #[layers] / tpt_benchmark::main!        (tpt-benchmark-macros)
+            |  generate BenchDef tables
+            v
+  +---------------------------------------------------------------+
+  | runner: CLI parsing, filtering, progress output               |
+  |   run_benches() --&gt; one measure() per (benchmark, layer)      |
+  +-------------------------------+-------------------------------+
+                                  |
+                                  v
+  +---------------------------------------------------------------+
+  | bencher: measure(config, layer, |b| b.iter(routine))          |
+  |   warm-up -&gt; calibrate batch size -&gt; batched sampling loop    |
+  |        |                         |                            |
+  |        | start_batch / end_batch | is_outlier / should_stop  |
+  |        v                         v                            |
+  |   MeasurementLayer           StatisticalEngine (engine.rs)    |
+  |   (layer.rs)                 MAD rejection, SPRT, CI, caps    |
+  |        |                         |                            |
+  |   WallClock / Allocations /   Welford, t-CI, MAD (stats.rs)   |
+  |   AllocBytes / HardwareCounter                                 |
+  +-------------------------------+-------------------------------+
+                                  |  Summary per layer
+                                  v
+  +---------------------------------------------------------------+
+  | BenchResult list                                              |
+  |   |-- json.rs        target/tpt-benchmark/tpt-benchmark.json   |
+  |   |-- baseline.rs    target/tpt-benchmark/baselines/&lt;name&gt;.json|
+  |   |     compare() -&gt; Comparison (regressions, exit code)       |
+  |   `-- report/        terminal table, index.html (plotters SVG) |
+  +---------------------------------------------------------------+
+</code></pre>
+<h2 id="modules">Modules</h2>
+<table><thead><tr><th>Module</th><th>Role</th></tr></thead><tbody>
+<tr><td><code>layer</code></td><td><code>MeasurementLayer</code> trait (<code>start_batch</code>, <code>end_batch</code>, <code>Sample</code>) and <code>SampleData</code>. An erased view lets the loop hold any layer.</td></tr>
+<tr><td><code>clock</code></td><td>Raw tick sources (<code>RDTSC</code>, <code>CNTVCT_EL0</code>, <code>Instant</code>) with calibrated ns-per-tick. The only module with <code>unsafe</code> code, see <a href="unsafe-policy.html"><code>unsafe-policy.md</code></a>.</td></tr>
+<tr><td><code>wallclock</code></td><td><code>WallClock</code> layer: one <code>WallSample</code> (total ns) per batch.</td></tr>
+<tr><td><code>alloc</code></td><td><code>CountingAllocator</code> (a <code>GlobalAlloc</code> wrapper), <code>Allocations</code> and <code>AllocBytes</code> layers, thread-local counters.</td></tr>
+<tr><td><code>hwcounters</code></td><td><code>HardwareCounter</code> layer and the <code>Counter</code> enum. Linux backend uses <code>perf_event_open</code>; other OSes return <code>Unavailable</code>.</td></tr>
+<tr><td><code>bencher</code></td><td><code>Config</code>, <code>Bencher</code>, and <code>measure()</code>. Owns the batched loop.</td></tr>
+<tr><td><code>engine</code></td><td><code>SequentialEngine</code> (the default <code>StatisticalEngine</code>), <code>Sprt</code>, <code>Observations</code>. Decides outliers and stop reasons.</td></tr>
+<tr><td><code>stats</code></td><td><code>Welford</code>, Student-t critical values, <code>median</code>, <code>scaled_mad</code>, <code>Summary</code>, <code>StopReason</code>.</td></tr>
+<tr><td><code>runner</code></td><td><code>BenchDef</code> (the generated table entry), <code>LayerKind</code>, <code>run_benches</code>, the command-line parser and <code>main()</code>.</td></tr>
+<tr><td><code>json</code></td><td>Versioned JSON export (<code>schema_version</code>, currently 1).</td></tr>
+<tr><td><code>baseline</code></td><td>Named baselines (<code>format_version</code>, currently 1), the statistical <code>compare()</code> and <code>Verdict</code>.</td></tr>
+<tr><td><code>report</code></td><td>Terminal table (colour respects <code>NO_COLOR</code> and non-TTY output) and the single-file HTML report.</td></tr>
+<tr><td><code>macros</code></td><td>The <code>tpt_benchmark::main!</code> macro. The attribute macros live in the <code>tpt-benchmark-macros</code> crate and are re-exported.</td></tr>
+</tbody></table>
+<h2 id="the-batched-loop">The batched loop</h2>
+<p><code>Bencher::iter</code> is the basic entry point. <code>iter_batched</code>, <code>iter_async</code> and
+<code>iter_async_with</code> build their own batch closure and then call the same
+<code>sample()</code> function, so the steps below apply to all of them. In order:</p>
+<ol>
+<li><strong>Warm-up.</strong> The routine runs as batches of one iteration until
+<code>Config::warmup</code> has elapsed. Its values are discarded.</li>
+<li><strong>Calibration.</strong> Starting at 10 iterations, the batch size doubles until a
+batch takes at least <code>Config::min_batch</code> (default 1 ms), or until
+<code>Config::max_batch_iters</code> (default 2^24) is reached. The batch size is then
+fixed for the rest of the run.</li>
+<li><strong>Sampling.</strong> Each step runs one batch of that size, takes the layer's
+total for the batch, and divides by the iteration count to get one
+per-iteration value. The engine then:
+<ul>
+<li>tests the value for being an outlier against the accepted values
+(<code>is_outlier</code>), and records the flag for every draw;</li>
+<li>keeps the value if it is not an outlier;</li>
+<li>checks <code>should_stop</code> and either continues or ends with a <code>StopReason</code>.</li>
+</ul>
+</li>
+</ol>
+<p>The result is a <code>Summary</code>: mean, standard deviation, median, 95 % interval,
+the accepted values, the outlier count, the batch size, the stop reason, and
+the <code>noisy</code> flag. The <code>noisy</code> flag is set whenever the noise test did not
+return <code>Clean</code>, including the case where it was still undecided.</p>
+<p>Because each <code>measure</code> call runs the function once, each layer runs the
+routine in a separate pass. Layers never share a run, so the cost of one
+layer (for example counting allocations) does not change another layer's
+timing.</p>
+<h2 id="extension-points">Extension points</h2>
+<ul>
+<li><strong>New layer:</strong> implement <code>MeasurementLayer</code> with a <code>SampleData</code> type. It is
+usable with <code>measure()</code> immediately. To expose it through the macros, add a
+variant to <code>LayerKind</code> and to the layer table in the macros crate.</li>
+<li><strong>New engine:</strong> implement <code>StatisticalEngine</code> (<code>is_outlier</code>, <code>should_stop</code>,
+<code>noise_verdict</code>) and pass it through <code>Config::engine</code>. The current <code>Config</code>
+holds a concrete <code>SequentialEngine</code>, so a different engine needs a change to
+<code>Config</code> as well.</li>
+</ul>
+<h2 id="related-documents">Related documents</h2>
+<ul>
+<li><a href="statistics.html"><code>statistics.md</code></a>: the statistical method, as implemented.</li>
+<li><a href="layers.html"><code>layers.md</code></a>: what each layer measures and what it needs.</li>
+<li><a href="json-schema.html"><code>json-schema.md</code></a>: the JSON export.</li>
+<li><a href="hardware-counters.html"><code>hardware-counters.md</code></a>, <a href="allocations.html"><code>allocations.md</code></a>: setup.</li>
+<li><a href="timing-overhead.html"><code>timing-overhead.md</code></a>: measured cost of the loop.</li>
+<li><a href="unsafe-policy.html"><code>unsafe-policy.md</code></a>: where <code>unsafe</code> is allowed.</li>
+</ul>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measurement layers</title>
+<meta name="description" content="Measurement layers - tpt-benchmark documentation.">
+<meta property="og:title" content="Measurement layers">
+<meta property="og:description" content="Measurement layers - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/layers.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/layers.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Measurement layers","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Measurement layers</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="measurement-layers">Measurement layers</h1>
+<p>A layer is one probe that reports one metric for each batch of iterations.
+Each benchmark runs once per active layer, so a routine measured under
+<code>WallClock</code> and <code>Allocations</code> is executed in two separate passes. The passes do
+not affect each other. See <a href="architecture.html"><code>architecture.md</code></a>.</p>
+<table><thead><tr><th>Layer (macro name)</th><th>Value per iteration</th><th>Platforms</th><th>Setup needed</th></tr></thead><tbody>
+<tr><td><code>WallClock</code></td><td>Nanoseconds</td><td>Linux, macOS, Windows, other (see below)</td><td>None</td></tr>
+<tr><td><code>Allocations</code></td><td>Heap allocation calls</td><td>Any, with the counting allocator</td><td><code>#[global_allocator]</code></td></tr>
+<tr><td><code>AllocBytes</code></td><td>Heap bytes requested</td><td>Any, with the counting allocator</td><td><code>#[global_allocator]</code></td></tr>
+<tr><td><code>HwInstructions</code>, <code>HwL1Misses</code>, <code>HwL2Misses</code>, <code>HwBranchMisses</code> (or <code>HardwareCounters</code> for all four)</td><td>Events per iteration</td><td>Linux only in this build</td><td>Kernel permission (see below)</td></tr>
+</tbody></table>
+<p>When a layer cannot run, the runner prints a warning naming the layer and
+skips it. The other layers still run. <code>Allocations::new()</code> and
+<code>AllocBytes::new()</code> do not check for the allocator, so use <code>try_new()</code> if you
+need the check.</p>
+<h2 id="wallclock">WallClock</h2>
+<p>Elapsed time for each batch, divided by the iteration count. The clock
+(<code>crates/tpt-benchmark/src/clock.rs</code>) is chosen in this order:</p>
+<table><thead><tr><th>Platform</th><th>Source</th><th>Used when</th></tr></thead><tbody>
+<tr><td>x86 / x86_64</td><td><code>RDTSC</code></td><td>The CPU reports an invariant TSC (CPUID <code>0x8000_0007</code>, EDX bit 8), and the calibrated rate is between 1 and 10 GHz. The rate is not architecturally exposed, so it is calibrated against <code>Instant</code> over 10 ms.</td></tr>
+<tr><td>aarch64</td><td><code>CNTVCT_EL0</code></td><td>The calibrated rate agrees with <code>CNTFRQ_EL0</code> to within 5 %.</td></tr>
+<tr><td>Any</td><td><code>std::time::Instant</code></td><td>Any other case, including when a hardware source fails its check.</td></tr>
+</tbody></table>
+<p><code>Clock::best()</code> makes this choice. <code>Clock::instant()</code> forces the portable
+source. <code>WallClock::new()</code> uses <code>Clock::best()</code>.</p>
+<p>The aarch64 source compiles for <code>aarch64-unknown-linux-gnu</code>, but it has not
+yet been run on aarch64 hardware.</p>
+<h2 id="allocations-and-allocbytes">Allocations and AllocBytes</h2>
+<p>Both layers read thread-local counters that a <code>CountingAllocator</code> updates.
+The allocator forwards every call to <code>System</code> and adds to the counters on
+success:</p>
+<table><thead><tr><th>Operation</th><th><code>Allocations</code> (calls)</th><th><code>AllocBytes</code> (bytes)</th></tr></thead><tbody>
+<tr><td><code>alloc</code></td><td>+1</td><td>layout size</td></tr>
+<tr><td><code>alloc_zeroed</code></td><td>+1</td><td>layout size</td></tr>
+<tr><td><code>realloc</code></td><td>+1</td><td>new size</td></tr>
+<tr><td><code>dealloc</code></td><td>not counted here</td><td>not counted here</td></tr>
+</tbody></table>
+<p>Install the allocator in the binary that runs the benchmark:</p>
+<pre><code class="language-rust">#[global_allocator]
+static ALLOC: tpt_benchmark::alloc::CountingAllocator =
+    tpt_benchmark::alloc::CountingAllocator::new();
+</code></pre>
+<p>Only one global allocator is allowed per binary, and the library cannot
+install one for you. See <a href="allocations.html"><code>allocations.md</code></a> for the details,
+the multi-threading rule (only the thread that runs the batch is counted), and
+what "requested bytes" means.</p>
+<p><code>Allocations::try_new()</code> and <code>AllocBytes::try_new()</code> make one probe allocation
+and return <code>Unavailable</code>, with the install instructions, when it is not
+counted.</p>
+<p><strong>Stop reason for zero-allocation routines.</strong> A routine that makes no
+allocations gives a value of 0 on every batch. The engine never meets its
+precision target for a zero mean, so the run ends at <code>MaxSamples</code> (1000 draws)
+or <code>MaxTime</code>, not <code>Converged</code>. See <a href="statistics.html#behaviour-the-caps-imply"><code>statistics.md</code></a>.
+The result is still exactly 0.</p>
+<h2 id="hardwarecounters">HardwareCounters</h2>
+<p>Four events are available, each read as a count for each batch:</p>
+<table><thead><tr><th>Layer</th><th>Event</th><th>Linux mapping</th></tr></thead><tbody>
+<tr><td><code>HwInstructions</code></td><td>Retired instructions</td><td><code>PERF_COUNT_HW_INSTRUCTIONS</code></td></tr>
+<tr><td><code>HwL1Misses</code></td><td>L1 data cache read misses</td><td><code>PERF_TYPE_HW_CACHE</code>, L1D, read, miss</td></tr>
+<tr><td><code>HwL2Misses</code></td><td>Last-level cache read misses</td><td><code>PERF_TYPE_HW_CACHE</code>, LL, read, miss</td></tr>
+<tr><td><code>HwBranchMisses</code></td><td>Mispredicted branches</td><td><code>PERF_COUNT_HW_BRANCH_MISSES</code></td></tr>
+</tbody></table>
+<p><code>HwL2Misses</code> maps to the last-level cache, because the generic perf events
+have no L2 entry. On most current CPUs that is L3. The counters count user
+space only (<code>exclude_kernel</code>, <code>exclude_hv</code>).</p>
+<p><strong>Platform support in this build:</strong></p>
+<ul>
+<li><strong>Linux:</strong> implemented with <code>perf_event_open</code>. It needs
+<code>kernel.perf_event_paranoid</code> at 2 or lower, or <code>CAP_PERFMON</code>. Containers,
+VMs and CI runners often hide the PMU.</li>
+<li><strong>macOS:</strong> not implemented. kperf is a private API that needs root.</li>
+<li><strong>Windows:</strong> not implemented. PMC access needs ETW or a driver, and admin.</li>
+<li><strong>Other:</strong> not supported.</li>
+</ul>
+<p>On macOS, Windows and other platforms the layer reports <code>Unavailable</code>, and
+the runner skips it with a warning.</p>
+<p>Setup, container and VM notes, and the event mapping are in
+<a href="hardware-counters.html"><code>hardware-counters.md</code></a>.</p>
+<h2 id="choosing-layers-in-code">Choosing layers in code</h2>
+<pre><code class="language-rust">#[tpt_bench]
+#[layers(WallClock, Allocations)]
+fn parse(b: &amp;mut Bencher) { /* ... */ }
+
+#[tpt_bench_group]
+#[layers(HardwareCounters)]
+mod kernels { /* ... */ }
+</code></pre>
+<p><code>#[layers]</code> can sit on a group or on one benchmark. A benchmark's own
+attribute replaces the group's. With no attribute, a benchmark runs under
+<code>WallClock</code> only.</p>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON export schema</title>
+<meta name="description" content="JSON export schema - tpt-benchmark documentation.">
+<meta property="og:title" content="JSON export schema">
+<meta property="og:description" content="JSON export schema - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/json-schema.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/json-schema.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"JSON export schema","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>JSON export schema</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="json-export-schema">JSON export schema</h1>
+<p><code>tpt-benchmark</code> writes its raw statistical data to
+<code>target/tpt-benchmark/tpt-benchmark.json</code> after every run. The document is
+versioned, so CI tooling can check it before reading it.</p>
+<p>Current schema version: <strong>2</strong>. The matching Rust constant is
+<code>tpt_benchmark::json::SCHEMA_VERSION</code>.</p>
+<h2 id="top-level">Top level</h2>
+<table><thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>schema_version</code></td><td>integer</td><td>Schema version. Increases on any incompatible change.</td></tr>
+<tr><td><code>tool</code></td><td>string</td><td>Always <code>"tpt-benchmark"</code>.</td></tr>
+<tr><td><code>tool_version</code></td><td>string</td><td>Version of the crate that wrote the file.</td></tr>
+<tr><td><code>environment</code></td><td>object</td><td>Machine and build the run was measured on (new in v2). See below.</td></tr>
+<tr><td><code>benchmarks</code></td><td>array</td><td>One entry per benchmark that ran. See below.</td></tr>
+</tbody></table>
+<h2 id="environment">Environment</h2>
+<p>Added in schema 2. Every probe is best effort, so a field that could not be
+determined is <code>null</code>.</p>
+<table><thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>commit</code></td><td>string or null</td><td>Git commit hash. <code>GITHUB_SHA</code> if set, else <code>git rev-parse HEAD</code>.</td></tr>
+<tr><td><code>timestamp</code></td><td>string</td><td>UTC time the run finished, RFC 3339 (<code>2026-11-23T04:05:06Z</code>).</td></tr>
+<tr><td><code>os</code></td><td>string</td><td><code>linux</code>, <code>macos</code>, <code>windows</code>, ... (<code>std::env::consts::OS</code>).</td></tr>
+<tr><td><code>arch</code></td><td>string</td><td><code>x86_64</code>, <code>aarch64</code>, ... (<code>std::env::consts::ARCH</code>).</td></tr>
+<tr><td><code>cpu</code></td><td>string or null</td><td>CPU model name (<code>/proc/cpuinfo</code>, <code>sysctl</code>, or <code>PROCESSOR_IDENTIFIER</code>).</td></tr>
+<tr><td><code>cores</code></td><td>integer or null</td><td>Logical cores available to the process.</td></tr>
+<tr><td><code>rustc</code></td><td>string or null</td><td>Output of <code>rustc --version</code> at run time.</td></tr>
+<tr><td><code>clock_source</code></td><td>string</td><td>Wall-clock source: <code>tsc</code>, <code>cntvct</code> or <code>instant</code>.</td></tr>
+<tr><td><code>runner</code></td><td>string</td><td><code>github-actions</code> when <code>GITHUB_ACTIONS</code> is set, else <code>local</code>.</td></tr>
+</tbody></table>
+<h2 id="benchmark-entry">Benchmark entry</h2>
+<table><thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>name</code></td><td>string</td><td>Fully qualified name, <code>group::name</code> or just <code>name</code>. Arguments appear as <code>name/&lt;arg&gt;</code>.</td></tr>
+<tr><td><code>layers</code></td><td>array</td><td>One entry per layer that produced a result. Layers that were unavailable are omitted.</td></tr>
+</tbody></table>
+<h2 id="layer-entry">Layer entry</h2>
+<table><thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>layer</code></td><td>string</td><td><code>WallClock</code>, <code>Allocations</code>, <code>AllocBytes</code>, <code>HwInstructions</code>, <code>HwL1Misses</code>, <code>HwL2Misses</code> or <code>HwBranchMisses</code>.</td></tr>
+<tr><td><code>mean</code></td><td>number</td><td>Mean per-iteration value. Nanoseconds for <code>WallClock</code>, counts for the others, bytes for <code>AllocBytes</code>.</td></tr>
+<tr><td><code>std_dev</code></td><td>number</td><td>Sample standard deviation of the accepted values.</td></tr>
+<tr><td><code>median</code></td><td>number</td><td>Median of the accepted values.</td></tr>
+<tr><td><code>ci_low</code></td><td>number</td><td>Lower bound of the 95 % confidence interval for the mean.</td></tr>
+<tr><td><code>ci_high</code></td><td>number</td><td>Upper bound of the 95 % confidence interval for the mean.</td></tr>
+<tr><td><code>samples</code></td><td>integer</td><td>Number of accepted samples.</td></tr>
+<tr><td><code>values</code></td><td>array</td><td>The accepted per-iteration values, in arrival order.</td></tr>
+<tr><td><code>outliers</code></td><td>integer</td><td>Number of samples rejected by the MAD test.</td></tr>
+<tr><td><code>iters_per_batch</code></td><td>integer</td><td>Iterations executed in each measured batch.</td></tr>
+<tr><td><code>stop_reason</code></td><td>string</td><td><code>converged</code>, <code>max_samples</code> or <code>max_time</code>.</td></tr>
+<tr><td><code>noisy</code></td><td>boolean</td><td><code>true</code> when the noise-regime SPRT did not accept the clean hypothesis.</td></tr>
+</tbody></table>
+<p>Non-finite numbers (<code>NaN</code>, infinities) are written as <code>null</code>. In practice
+this appears only for degenerate inputs such as a benchmark whose mean is zero.</p>
+<h2 id="example">Example</h2>
+<pre><code class="language-json">{
+  "schema_version": 2,
+  "tool": "tpt-benchmark",
+  "tool_version": "0.1.0",
+  "environment": {
+    "commit": "9f2c1ab0d4e5",
+    "timestamp": "2026-11-23T04:05:06Z",
+    "os": "linux",
+    "arch": "x86_64",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "cores": 4,
+    "rustc": "rustc 1.91.0 (f1e2d3c4b 2026-10-01)",
+    "clock_source": "tsc",
+    "runner": "github-actions"
+  },
+  "benchmarks": [
+    {
+      "name": "sums::sum/128",
+      "layers": [
+        {
+          "layer": "WallClock",
+          "mean": 412.7,
+          "std_dev": 3.1,
+          "median": 411.9,
+          "ci_low": 411.8,
+          "ci_high": 413.6,
+          "samples": 37,
+          "values": [412.0, 409.5, 415.2],
+          "outliers": 2,
+          "iters_per_batch": 2560,
+          "stop_reason": "converged",
+          "noisy": false
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p>(<code>values</code> is shortened here. A real export lists every accepted value.)</p>
+<h2 id="compatibility">Compatibility</h2>
+<ul>
+<li>
+<p>Schema 2 is schema 1 plus the <code>environment</code> object. Nothing in <code>benchmarks</code> changed,
+so a reader written for schema 1 can read schema 2 files by ignoring the new field.
+A reader of schema 2 must treat a missing <code>environment</code> (a schema 1 file) as unknown.</p>
+</li>
+<li>
+<p>Adding an optional field is not a breaking change, and does not bump the version.</p>
+</li>
+<li>
+<p>Renaming or removing a field, or changing a unit, bumps <code>schema_version</code>.</p>
+</li>
+<li>
+<p>Golden-file tests in <code>crates/tpt-benchmark/src/json.rs</code> guard the layout.</p>
+</li>
+</ul>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

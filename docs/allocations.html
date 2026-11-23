@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allocation layers: installing the counting allocator</title>
+<meta name="description" content="Allocation layers: installing the counting allocator - tpt-benchmark documentation.">
+<meta property="og:title" content="Allocation layers: installing the counting allocator">
+<meta property="og:description" content="Allocation layers: installing the counting allocator - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/allocations.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/allocations.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Allocation layers: installing the counting allocator","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Allocation layers: installing the counting allocator</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="allocation-layers-installing-the-counting-allocator">Allocation layers: installing the counting allocator</h1>
+<p>The <code>Allocations</code> (calls per batch) and <code>AllocBytes</code> (bytes requested per
+batch) layers count heap activity through a wrapper around the system
+allocator. The wrapper has to be the process's global allocator, so you
+install it yourself:</p>
+<pre><code class="language-rust">#[global_allocator]
+static ALLOC: tpt_benchmark::alloc::CountingAllocator =
+    tpt_benchmark::alloc::CountingAllocator::new();
+</code></pre>
+<p>Put this in the benchmark binary's root (the <code>main.rs</code> of a <code>harness = false</code>
+bench, or a test crate). The library cannot generate it: Rust allows exactly
+one global allocator per binary, and a library must not pick it for the user.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li><strong>One allocator per binary.</strong> If your program already has a
+<code>#[global_allocator]</code> (for example mimalloc or jemalloc), the counting
+wrapper must replace it. Wrap that allocator yourself, or use the counting
+layers in a separate binary.</li>
+<li><strong>Installation is not detected by <code>new()</code>.</strong> <code>Allocations::new()</code> does not
+check. If the allocator is missing, every batch reports 0, which looks like
+a zero-allocation result. Use <code>Allocations::try_new()</code> or
+<code>AllocBytes::try_new()</code> instead. They make one probe allocation and return
+<code>Unavailable</code>, with the install instructions, if it was not counted.</li>
+<li><strong>Calling thread only.</strong> Counters are thread-local. A batch counts the
+allocations of the thread that runs it and ignores allocations made by other
+threads. For a multi-threaded routine, the measurement covers the thread
+that runs the batch, not the worker threads it spawns or uses.</li>
+<li><strong>Bytes are requested bytes.</strong> <code>AllocBytes</code> sums the sizes passed to
+<code>alloc</code> and <code>alloc_zeroed</code>, plus the new size passed to <code>realloc</code>. It is
+gross allocation volume, not net retained memory. Deallocations are counted
+separately, by <code>tpt_benchmark::alloc::thread_dealloc_totals</code>.</li>
+<li><strong>Overhead.</strong> The counters are plain thread-local <code>Cell&lt;u64&gt;</code>s. Each
+allocation adds a few integer operations, with no atomics or locks.</li>
+</ul>
+<h2 id="what-is-counted">What is counted</h2>
+<table><thead><tr><th>Operation</th><th>Calls</th><th>Bytes</th></tr></thead><tbody>
+<tr><td><code>alloc</code></td><td>+1 on success</td><td>layout size</td></tr>
+<tr><td><code>alloc_zeroed</code></td><td>+1 on success</td><td>layout size</td></tr>
+<tr><td><code>realloc</code></td><td>+1 on success</td><td>new size</td></tr>
+<tr><td><code>dealloc</code></td><td>counted separately</td><td>layout size</td></tr>
+</tbody></table>
+<p>Failed allocations are not counted. Only the batch between <code>start_batch</code> and
+<code>end_batch</code> is measured. The orchestrator's own bookkeeping, such as the <code>Vec</code>
+pushes after each batch, runs outside that window and is not counted.</p>
+<h2 id="zero-allocation-proofs">Zero-allocation proofs</h2>
+<pre><code class="language-rust">use tpt_benchmark::alloc::Allocations;
+
+let layer = Allocations::try_new()?; // Err(Unavailable) if not installed
+</code></pre>
+<p><code>crates/tpt-benchmark/tests/alloc_counting.rs</code> holds the reference checks. A
+zero-allocation function reports exactly 0 calls and 0 bytes.
+<code>Vec::with_capacity(16)</code>, <code>Box::new(1u64)</code> and <code>String::from("hello")</code> report
+1 call each, of 128, 8 and 5 bytes.</p>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unsafe code policy</title>
+<meta name="description" content="Unsafe code policy - tpt-benchmark documentation.">
+<meta property="og:title" content="Unsafe code policy">
+<meta property="og:description" content="Unsafe code policy - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/unsafe-policy.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/unsafe-policy.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Unsafe code policy","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Unsafe code policy</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="unsafe-code-policy">Unsafe code policy</h1>
+<p><code>tpt-benchmark</code> keeps its <code>unsafe</code> surface as small as possible.</p>
+<h2 id="rules">Rules</h2>
+<ol>
+<li>The crate root has <code>#![deny(unsafe_code)]</code>. A module may opt in with
+<code>#[allow(unsafe_code)]</code>, and that attribute is only added to modules that
+need it: the clock, the allocator, and the hardware-counter backends.</li>
+<li>Every <code>unsafe</code> block carries a <code>// SAFETY:</code> comment that states the
+invariant it relies on and why it holds.</li>
+<li>Every <code>unsafe fn</code> documents its preconditions in a <code># Safety</code> rustdoc section.</li>
+<li><code>unsafe_op_in_unsafe_fn</code> is denied workspace-wide, so an unsafe operation
+inside an <code>unsafe fn</code> still needs its own block and comment.</li>
+<li>New <code>unsafe</code> needs a test or a documented reason it cannot be tested.</li>
+</ol>
+<h2 id="inventory">Inventory</h2>
+<table><thead><tr><th>Module</th><th>Why it is unsafe</th></tr></thead><tbody>
+<tr><td><code>clock</code></td><td><code>RDTSC</code> and <code>CNTVCT_EL0</code>/<code>CNTFRQ_EL0</code> reads, and <code>CPUID</code></td></tr>
+<tr><td><code>alloc</code> (planned)</td><td><code>GlobalAlloc</code> implementation delegating to <code>System</code></td></tr>
+<tr><td><code>hwcounters</code> (planned)</td><td><code>perf_event_open</code>, <code>ioctl</code>, <code>read</code> on a file descriptor (Linux)</td></tr>
+</tbody></table>
+<h2 id="why-each-block-is-sound">Why each block is sound</h2>
+<ul>
+<li><strong><code>RDTSC</code>/<code>RDPMC</code>-style reads</strong> have no memory effects and no preconditions
+on x86. The TSC is used only after CPUID confirms an invariant TSC.</li>
+<li><strong><code>CPUID</code></strong> is always available on x86 and x86_64. The extended leaf is
+queried only after the maximum extended leaf has been checked. On toolchains
+where <code>__cpuid</code> is safe, the block is still required for MSRV 1.85.</li>
+<li><strong><code>CNTVCT_EL0</code> / <code>CNTFRQ_EL0</code></strong> are readable at EL0 on the platforms this
+crate targets (Linux and macOS). They have no side effects.</li>
+</ul>
+<h2 id="status">Status</h2>
+<p>The Phase 5 audit (todo.md) will re-check each block against these rules,
+run Miri where it applies, and record the results here.</p>
+<p>Miri: available (<code>cargo +nightly miri</code>). <code>clock::tests::instant_clock_is_monotonic</code>
+passes under Miri. <code>clock::tests::best_clock_converts_a_sleep_to_plausible_ns</code>
+aborts with "inline assembly is not supported", because <code>Clock::best()</code> calls
+<code>__cpuid</code> (inline asm) through <code>invariant_tsc_supported</code>. Miri cannot run the
+hardware clock path, so the <code>RDTSC</code>, <code>CPUID</code> and <code>CNTVCT_EL0</code> blocks are
+covered only by review and by the <code>cargo check</code> cross-target builds.</p>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

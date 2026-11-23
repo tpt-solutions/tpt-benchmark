@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrating from Criterion</title>
+<meta name="description" content="Migrating from Criterion - tpt-benchmark documentation.">
+<meta property="og:title" content="Migrating from Criterion">
+<meta property="og:description" content="Migrating from Criterion - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/migrating-from-criterion.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/migrating-from-criterion.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from Criterion","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Migrating from Criterion</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="migrating-from-criterion">Migrating from Criterion</h1>
+<p>This guide maps a Criterion benchmark suite onto <code>tpt-benchmark</code>. It covers
+the code changes, the command-line flags, the output locations and what has
+no equivalent yet. Features that are not implemented are listed at the end,
+so check that section before you start.</p>
+<p>The Criterion-side names below follow Criterion's documented API as we know
+it. They were not re-checked against a Criterion release for this guide. The
+<code>tpt-benchmark</code> side was checked against the source.</p>
+<h2 id="cargotoml">Cargo.toml</h2>
+<p>Keep <code>harness = false</code>. Remove the <code>criterion</code> dev-dependency and add
+<code>tpt-benchmark</code>:</p>
+<pre><code class="language-toml">[dev-dependencies]
+tpt-benchmark = "0.1"        # not yet on crates.io; use a path or git dependency until it is published
+
+[[bench]]
+name = "sums"
+harness = false
+</code></pre>
+<h2 id="a-single-benchmark">A single benchmark</h2>
+<p>Criterion:</p>
+<pre><code class="language-rust">use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn sum(c: &amp;mut Criterion) {
+    c.bench_function("sum", |b| b.iter(|| black_box(1 + 1)));
+}
+
+criterion_group!(benches, sum);
+criterion_main!(benches);
+</code></pre>
+<p><code>tpt-benchmark</code>:</p>
+<pre><code class="language-rust">use tpt_benchmark::{Bencher, black_box, tpt_bench, tpt_bench_group};
+
+#[tpt_bench_group]
+mod arith {
+    use super::*;
+
+    #[tpt_bench]
+    fn sum(b: &amp;mut Bencher) {
+        b.iter(|| black_box(1 + 1));
+    }
+}
+
+tpt_benchmark::main!(arith);
+</code></pre>
+<p>Points to note:</p>
+<ul>
+<li><code>criterion_group!</code> and <code>criterion_main!</code> are replaced by <code>tpt_bench_group</code>
+on a module and <code>tpt_benchmark::main!</code>. Each <code>main!</code> argument is a group
+module.</li>
+<li>The benchmark function takes <code>b: &amp;mut Bencher</code> and must call one of the
+measuring methods (<code>b.iter</code>, <code>b.iter_batched</code>, <code>b.iter_async</code>) exactly once.
+It must return <code>()</code>.</li>
+<li>The benchmark's name is <code>group::function</code>, so <code>sum</code> in <code>mod arith</code> is
+<code>arith::sum</code>. Filters and baselines use that name.</li>
+<li><code>black_box</code> is re-exported from <code>std::hint::black_box</code>. Import it from
+<code>tpt_benchmark</code>, not from <code>criterion</code>.</li>
+</ul>
+<h2 id="benchmark-groups-and-functions">Benchmark groups and functions</h2>
+<table><thead><tr><th>Criterion</th><th>tpt-benchmark</th></tr></thead><tbody>
+<tr><td><code>criterion_group!(name, f1, f2)</code></td><td><code>#[tpt_bench_group] mod name { ... }</code> with <code>#[tpt_bench]</code> functions</td></tr>
+<tr><td><code>c.benchmark_group("g")</code></td><td>A module named <code>g</code> with <code>#[tpt_bench_group]</code></td></tr>
+<tr><td><code>c.bench_function("f", |b| ...)</code></td><td>A function <code>f</code> with <code>#[tpt_bench]</code></td></tr>
+<tr><td><code>criterion_main!(name)</code></td><td><code>tpt_benchmark::main!(name)</code></td></tr>
+</tbody></table>
+<h2 id="parameterised-benchmarks">Parameterised benchmarks</h2>
+<p>Criterion's <code>BenchmarkId</code> and <code>bench_with_input</code> become <code>args = [...]</code>. Each
+value produces one benchmark. Its name is the function name, a slash, and the
+text of the expression:</p>
+<pre><code class="language-rust">#[tpt_bench(args = [128, 1024])]
+fn sum(b: &amp;mut Bencher, n: usize) {
+    let data: Vec&lt;u64&gt; = (0..n as u64).collect();
+    b.iter(|| black_box(&amp;data).iter().sum::&lt;u64&gt;());
+}
+</code></pre>
+<p>This is benchmarked as <code>arith::sum/128</code> and <code>arith::sum/1024</code>. Build the
+input once, outside <code>iter</code>, as shown.</p>
+<h2 id="layers">Layers</h2>
+<p>Criterion measures wall time only. In <code>tpt-benchmark</code>, wall time is the
+default layer and needs no attribute. The other layers are selected with
+<code>#[layers(...)]</code> on a group or on one benchmark:</p>
+<pre><code class="language-rust">#[tpt_bench_group]
+#[layers(WallClock, Allocations)]
+mod parse { /* ... */ }
+</code></pre>
+<p>Valid names are <code>WallClock</code>, <code>Allocations</code>, <code>AllocBytes</code>, <code>HardwareCounters</code>,
+<code>HwInstructions</code>, <code>HwL1Misses</code>, <code>HwL2Misses</code> and <code>HwBranchMisses</code>. The
+allocation layers need <code>#[global_allocator]</code> (see
+<a href="allocations.html"><code>allocations.md</code></a>). Hardware counters work on Linux only (see
+<a href="layers.html"><code>layers.md</code></a>).</p>
+<h2 id="command-line-flags">Command-line flags</h2>
+<p>Run the bench as before with <code>cargo bench</code>. Arguments after <code>--</code> go to the
+binary.</p>
+<table><thead><tr><th>Criterion flag</th><th>tpt-benchmark</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>&lt;FILTER&gt;</code></td><td><code>&lt;FILTER&gt;</code></td><td>Substring match only. Criterion takes a regex.</td></tr>
+<tr><td><code>--exact</code></td><td><code>--exact</code></td><td>Same meaning.</td></tr>
+<tr><td><code>--list</code></td><td><code>--list</code></td><td>Prints <code>group::name</code> for each benchmark.</td></tr>
+<tr><td><code>--save-baseline &lt;NAME&gt;</code></td><td><code>--save-baseline &lt;NAME&gt;</code></td><td>Writes to <code>target/tpt-benchmark/baselines/&lt;NAME&gt;.json</code>.</td></tr>
+<tr><td><code>--baseline &lt;NAME&gt;</code></td><td><code>--baseline &lt;NAME&gt;</code></td><td>Compares against that file. Exits with code 2 if it is missing or has an unsupported format.</td></tr>
+<tr><td><code>--noplot</code></td><td><code>--noplot</code></td><td>Skips the HTML report.</td></tr>
+<tr><td><code>--quick</code></td><td><code>--quick</code></td><td>Different settings: warm-up 20 ms, <code>rel_error</code> 5 %, sampling cap 1 s.</td></tr>
+<tr><td><code>--threshold &lt;PCT&gt;</code></td><td><code>--threshold &lt;PCT&gt;</code></td><td>Regression threshold in percent. Default 5.</td></tr>
+<tr><td><code>--confidence 0.95</code></td><td><code>--confidence 0.95</code></td><td>Accepted only with the value 0.95. Any other value is an error.</td></tr>
+<tr><td><code>--bench</code></td><td>Ignored</td><td>Cargo passes it.</td></tr>
+</tbody></table>
+<p>tpt-benchmark exits with code 1 when a significant regression exceeds the
+threshold, which makes it usable as a CI gate.</p>
+<p>Options not listed above are an error (exit code 2), for example
+<code>--sample-size</code>, <code>--measurement-time</code>, <code>--warm-up-time</code>, <code>--load-baseline</code> and
+<code>--significance-level</code>. Remove them from scripts.</p>
+<h2 id="output-locations">Output locations</h2>
+<table><thead><tr><th></th><th>Criterion</th><th>tpt-benchmark</th></tr></thead><tbody>
+<tr><td>Directory</td><td><code>target/criterion/</code></td><td><code>target/tpt-benchmark/</code> (honours <code>CARGO_TARGET_DIR</code>)</td></tr>
+<tr><td>Machine-readable data</td><td><code>target/criterion/&lt;bench&gt;/new/estimates.json</code> (one per benchmark)</td><td><code>target/tpt-benchmark/tpt-benchmark.json</code> (one file for the run)</td></tr>
+<tr><td>Baselines</td><td>One directory per benchmark</td><td><code>target/tpt-benchmark/baselines/&lt;NAME&gt;.json</code> (one file per baseline)</td></tr>
+<tr><td>HTML report</td><td><code>target/criterion/report/index.html</code></td><td><code>target/tpt-benchmark/index.html</code></td></tr>
+</tbody></table>
+<p>The JSON file is versioned (<code>schema_version</code>) and is described in
+<a href="json-schema.html"><code>json-schema.md</code></a>. Its contents differ from Criterion's
+<code>estimates.json</code>, so update any scripts that read it.</p>
+<p>Baseline names may contain letters, digits, <code>-</code>, <code>_</code> and <code>.</code>. Any other
+character is rejected. Baselines saved by Criterion cannot be read by
+tpt-benchmark, and the reverse is also true. Re-save the baselines you need
+with the new tool.</p>
+<h2 id="configuration">Configuration</h2>
+<p>Criterion lets you set sample size, measurement time and warm-up time per
+group. tpt-benchmark does not have per-benchmark configuration. The <code>Config</code>
+(warm-up, minimum batch, engine settings) is used for every benchmark, and the
+<code>--quick</code> flag is the only tuning switch on the command line. Set your own
+<code>Config</code> by calling <code>tpt_benchmark::measure</code> directly if you need other values.</p>
+<h2 id="what-is-not-supported">What is not supported</h2>
+<p>These are checked against <code>crates/tpt-benchmark/src/bencher.rs</code> and the macros
+crate. They have not been implemented.</p>
+<ul>
+<li><strong><code>iter_batched_ref</code>, <code>iter_with_setup</code> and the <code>BatchSize</code> argument.</strong> Use
+<code>Bencher::iter_batched(setup, routine)</code>, which exists. Its setup runs
+outside the timed region, and each batch is capped at 1024 iterations
+because the inputs for a batch are built together. The Criterion names
+and the <code>BatchSize</code> enum have no counterpart.</li>
+<li><strong>Async <code>async fn</code> benchmark functions.</strong> The <code>#[tpt_bench]</code> macro rejects
+them with "async benchmark functions are not supported". Write a normal
+function and call <code>Bencher::iter_async(|| async { ... })</code>, or
+<code>Bencher::iter_async_with(executor, ...)</code> to use your runtime's <code>block_on</code>.</li>
+<li><strong>Confidence levels other than 0.95.</strong> The engine computes a 95 % interval
+only.</li>
+<li><strong>Regex filters.</strong> The filter is a substring match, or an exact match with
+<code>--exact</code>.</li>
+<li><strong>Separate report pages.</strong> The HTML report is one <code>index.html</code> with a
+section per benchmark and inline SVG charts. There are no per-group or
+per-benchmark pages.</li>
+<li><strong>Per-benchmark configuration</strong> through attributes (see above).</li>
+<li><strong>Criterion-compatible files.</strong> No shim. <code>criterion::</code> imports cannot be
+replaced by a re-export.</li>
+</ul>
+<p>If your suite uses one of these, plan to keep it on Criterion until it is
+supported.</p>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

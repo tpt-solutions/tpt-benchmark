@@ -73,27 +73,49 @@ th { background: var(--card); font-weight: 600; }
 
 nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
 .caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
 .machine { margin-top: 2.5rem; }
 footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","description":"Benchmark results and performance trends for tpt-benchmark, measured with tpt-benchmark.","name":"tpt-benchmark benchmarks"}</script>
 </head>
 <body>
-<nav class="site"><a href="index.html">tpt-benchmark</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="data/index.json">Raw data</a></nav>
+<nav class="site"><a href="index.html">tpt-benchmark</a><a href="docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="data/index.json">Raw data</a></nav>
 <header class="page"><h1>tpt-benchmark benchmarks</h1></header>
 <main>
-<p class="muted">3 benchmarks, 1 runs. Latest: <a href="https://github.com/tpt-solutions/tpt-benchmark/commit/d7e41442ae6cb26704f64ee2003c90bd20ba7f7d">d7e41442</a> on linux x86_64 | AMD EPYC 7763 64-Core Processor | github-actions at 2026-11-23T00:31:31Z.</p>
+<p class="muted">3 benchmarks, 2 runs. Latest: <a href="https://github.com/tpt-solutions/tpt-benchmark/commit/f054f586c09ad74611eaa9aa8601c7cb86138415">f054f586</a> on linux x86_64 | Intel(R) Xeon(R) 6975P-C | github-actions at 2026-11-23T01:13:57Z.</p>
 <div class="table-wrap"><table>
 <tr><th>Benchmark</th><th class="num">Time/iter</th><th class="num">vs previous</th><th class="num">Allocs/iter</th><th>Noisy</th></tr>
-<tr><td><a href="b/matrix-ops-dot-128.html">matrix_ops::dot/128</a></td><td class="num">82.79 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">0.00</td><td>yes</td></tr>
-<tr><td><a href="b/matrix-ops-dot-512.html">matrix_ops::dot/512</a></td><td class="num">448.67 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">0.00</td><td>yes</td></tr>
-<tr><td><a href="b/matrix-ops-fill.html">matrix_ops::fill</a></td><td class="num">10.28 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">-</td><td>no</td></tr>
+<tr><td><a href="b/matrix-ops-dot-128.html">matrix_ops::dot/128</a></td><td class="num">43.60 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">0.00</td><td>yes</td></tr>
+<tr><td><a href="b/matrix-ops-dot-512.html">matrix_ops::dot/512</a></td><td class="num">242.58 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">0.00</td><td>yes</td></tr>
+<tr><td><a href="b/matrix-ops-fill.html">matrix_ops::fill</a></td><td class="num">6.27 ns</td><td class="num"><span class="muted">n/a</span></td><td class="num">-</td><td>no</td></tr>
 </table></div>
 <h2>Recent runs</h2>
 <div class="table-wrap"><table>
 <tr><th>Time (UTC)</th><th>Commit</th><th>Machine</th><th>Raw</th></tr>
+<tr><td>2026-11-23T01:13:57Z</td><td><a href="https://github.com/tpt-solutions/tpt-benchmark/commit/f054f586c09ad74611eaa9aa8601c7cb86138415">f054f586</a></td><td>linux x86_64 | Intel(R) Xeon(R) 6975P-C | github-actions</td><td><a href="data/20261123T011357Z-f054f586-linux.json">json</a></td></tr>
 <tr><td>2026-11-23T00:31:31Z</td><td><a href="https://github.com/tpt-solutions/tpt-benchmark/commit/d7e41442ae6cb26704f64ee2003c90bd20ba7f7d">d7e41442</a></td><td>linux x86_64 | AMD EPYC 7763 64-Core Processor | github-actions</td><td><a href="data/20261123T003131Z-d7e41442-linux.json">json</a></td></tr>
 </table></div>
+<section class="caveat">
+<h2>About these numbers</h2>
+<ul>
+<li>Hosted CI runners share hardware, so timings are noisy. Compare a benchmark with its own
+earlier runs on the same machine. Runs on different machines are charted separately.</li>
+<li>Hosted runners usually expose no hardware counters, so instruction and cache figures are
+normally missing here.</li>
+<li><strong>Open question: agreement with Criterion.</strong> On identical workloads on a quiet
+machine, tpt-benchmark's 95% intervals overlapped Criterion's for two of four workloads. They did
+not overlap for the dot product, where tpt-benchmark read 2.6% higher, or for a sub-nanosecond
+multiply at the timer floor, where it read lower. An earlier 2x difference did not reproduce and
+its cause is not established. Treat absolute values as unvalidated. Details are in the
+<a href="https://github.com/tpt-solutions/tpt-benchmark/blob/master/docs/comparison-criterion.md">comparison write-up</a>.</li>
+</ul>
+</section>
 </main>
 <footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
 </body>
