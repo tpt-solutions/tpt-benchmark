@@ -50,6 +50,47 @@ pub fn write_html(
     fs::write(dir.join("index.html"), html::render(results, comparison))
 }
 
+/// Building blocks for `tpt-site`. Not part of the stable API.
+#[doc(hidden)]
+pub mod site_support {
+    /// The report's CSS, including the light and dark themes.
+    #[must_use]
+    pub fn css() -> &'static str {
+        super::html::STYLE
+    }
+
+    /// Histogram of per-iteration values for `layer`, as inline SVG.
+    #[must_use]
+    pub fn histogram_svg(layer: &str, values: &[f64]) -> String {
+        super::svg::histogram(values, &|v| super::format_value(layer, v))
+    }
+
+    /// Mean and 95 % interval per run, oldest first. Each point is
+    /// `(label, mean, ci_low, ci_high)`.
+    #[must_use]
+    pub fn history_svg(layer: &str, points: &[(String, f64, f64, f64)]) -> String {
+        super::svg::history(points, &|v| super::format_value(layer, v))
+    }
+
+    /// Formats a per-iteration value with a unit scaled to its magnitude.
+    #[must_use]
+    pub fn format_value(layer: &str, value: f64) -> String {
+        super::format_value(layer, value)
+    }
+
+    /// Display unit for a layer, such as `time/iter`.
+    #[must_use]
+    pub fn unit_label(layer: &str) -> &'static str {
+        super::unit_label(layer)
+    }
+
+    /// Escapes text for HTML.
+    #[must_use]
+    pub fn escape_html(text: &str) -> String {
+        super::escape_html(text)
+    }
+}
+
 #[cfg(windows)]
 fn prepare_terminal(color: bool) {
     if color {

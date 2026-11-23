@@ -133,6 +133,76 @@ pub(super) fn trend(values: &[f64], fmt: &dyn Fn(f64) -> String) -> String {
     add_titles(&svg, "circle", &titles)
 }
 
+/// One point per run: label, mean, CI low, CI high. Shows how a benchmark's
+/// mean and 95 % interval moved from run to run, oldest first.
+pub(super) fn history(points: &[(String, f64, f64, f64)], fmt: &dyn Fn(f64) -> String) -> String {
+    let usable: Vec<&(String, f64, f64, f64)> = points
+        .iter()
+        .filter(|p| p.1.is_finite() && p.2.is_finite() && p.3.is_finite())
+        .collect();
+    if usable.is_empty() {
+        return note("no runs to plot");
+    }
+    let n = usable.len();
+    let x_max = (n - 1).max(1) as f64;
+    let min = usable.iter().map(|p| p.2).fold(f64::INFINITY, f64::min);
+    let max = usable.iter().map(|p| p.3).fold(f64::NEG_INFINITY, f64::max);
+    let pad = if max > min { (max - min) * 0.1 } else { 0.5 };
+    let (y_lo, y_hi) = (min - pad, max + pad);
+
+    let svg = render_svg(|root| {
+        let mut chart = ChartBuilder::on(&root)
+            .margin(10)
+            .x_label_area_size(44)
+            .y_label_area_size(60)
+            .build_cartesian_2d(-0.25..x_max + 0.25, y_lo..y_hi)
+            .map_err(|e| e.to_string())?;
+        chart
+            .configure_mesh()
+            .x_desc("run (oldest to newest)")
+            .y_desc("per iteration")
+            .x_labels(n.min(8))
+            .x_label_formatter(&|v: &f64| {
+                if (v - v.round()).abs() < 0.01 && *v >= 0.0 {
+                    format!("{}", v.round() as u64 + 1)
+                } else {
+                    String::new()
+                }
+            })
+            .y_label_formatter(&|v: &f64| fmt(*v))
+            .axis_style(GREY)
+            .light_line_style(GREY.mix(0.25))
+            .draw()
+            .map_err(|e| e.to_string())?;
+        chart
+            .draw_series(usable.iter().enumerate().map(|(i, p)| {
+                PathElement::new(vec![(i as f64, p.2), (i as f64, p.3)], GREY.stroke_width(2))
+            }))
+            .map_err(|e| e.to_string())?;
+        chart
+            .draw_series(LineSeries::new(
+                usable.iter().enumerate().map(|(i, p)| (i as f64, p.1)),
+                BLUE.stroke_width(2),
+            ))
+            .map_err(|e| e.to_string())?;
+        chart
+            .draw_series(
+                usable
+                    .iter()
+                    .enumerate()
+                    .map(|(i, p)| Circle::new((i as f64, p.1), 4, BLUE.filled())),
+            )
+            .map_err(|e| e.to_string())?;
+        root.present().map_err(|e| e.to_string())
+    });
+
+    let titles: Vec<String> = usable
+        .iter()
+        .map(|p| format!("{}: {} ({} to {})", p.0, fmt(p.1), fmt(p.2), fmt(p.3)))
+        .collect();
+    add_titles(&svg, "circle", &titles)
+}
+
 /// Slope of the least-squares line through `values` against their index, in
 /// value units per sample. Zero when there are fewer than two values.
 pub(super) fn trend_slope(values: &[f64]) -> f64 {

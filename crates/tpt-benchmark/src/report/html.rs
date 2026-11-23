@@ -8,7 +8,7 @@ use crate::baseline::{Comparison, Verdict};
 use crate::runner::BenchResult;
 use crate::stats::{StopReason, Summary};
 
-const STYLE: &str = r#"
+pub(super) const STYLE: &str = r#"
 :root {
   --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
   --good: #1a7f37; --bad: #cf222e; --accent: #0969da;

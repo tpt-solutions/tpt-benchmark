@@ -130,20 +130,34 @@ pub fn scaled_mad(values: &[f64]) -> f64 {
     1.4826 * median(&deviations)
 }
 
+/// Reads a number that the JSON export wrote as `null` because it was not
+/// finite (`NaN` or an infinity), giving back `NaN`.
+fn nan_from_null<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Option::<f64>::deserialize(deserializer)?.unwrap_or(f64::NAN))
+}
+
 /// Summary statistics for one measured layer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Summary {
     /// Name of the layer that produced the samples, e.g. `"WallClock"`.
     pub layer: String,
     /// Mean per-iteration value (nanoseconds for the wall-clock layer).
+    #[serde(deserialize_with = "nan_from_null")]
     pub mean: f64,
     /// Sample standard deviation of the accepted per-iteration values.
+    #[serde(deserialize_with = "nan_from_null")]
     pub std_dev: f64,
     /// Median of the accepted per-iteration values.
+    #[serde(deserialize_with = "nan_from_null")]
     pub median: f64,
     /// Lower bound of the 95 % confidence interval for the mean.
+    #[serde(deserialize_with = "nan_from_null")]
     pub ci_low: f64,
     /// Upper bound of the 95 % confidence interval for the mean.
+    #[serde(deserialize_with = "nan_from_null")]
     pub ci_high: f64,
     /// Number of accepted samples.
     pub samples: u64,
@@ -178,6 +192,16 @@ pub enum StopReason {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn summary_reads_null_numbers_back_as_nan() {
+        let json = r#"{"layer":"Allocations","mean":0.0,"std_dev":null,"median":0.0,
+            "ci_low":null,"ci_high":null,"samples":3,"values":[0.0,0.0,0.0],"outliers":0,
+            "iters_per_batch":1,"stop_reason":"converged","noisy":false}"#;
+        let s: Summary = serde_json::from_str(json).unwrap();
+        assert!(s.std_dev.is_nan() && s.ci_low.is_nan() && s.ci_high.is_nan());
+        assert_eq!(s.mean, 0.0);
+    }
 
     #[test]
     fn welford_matches_two_pass_on_known_data() {

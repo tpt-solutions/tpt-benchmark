@@ -1,0 +1,133 @@
+//! `tpt-site`: turns tpt-benchmark JSON exports into a static trend site.
+//!
+//! ```text
+//! tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT]
+//! tpt-site serve [--out DIR] [--port N]
+//! ```
+//!
+//! `build` adds the newest export to the history in `<out>/data/` (existing
+//! files are kept, so history accumulates across builds) and regenerates the
+//! site.
+
+mod model;
+mod project;
+mod serve;
+mod site;
+
+use std::fs;
+use std::path::PathBuf;
+use std::process::ExitCode;
+
+const USAGE: &str = "usage:
+  tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT]
+  tpt-site serve [--out DIR] [--port N]
+
+defaults: --input target/tpt-benchmark, --out site, --threshold 5, title from Cargo.toml,
+repo from the git remote `origin`, base URL derived from a github.com repo.";
+
+struct Args {
+    input: PathBuf,
+    out: PathBuf,
+    title: Option<String>,
+    repo: Option<String>,
+    base_url: Option<String>,
+    threshold: f64,
+    port: u16,
+}
+
+fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
+    let mut a = Args {
+        input: PathBuf::from("target/tpt-benchmark"),
+        out: PathBuf::from("site"),
+        title: None,
+        repo: None,
+        base_url: None,
+        threshold: 5.0,
+        port: 8000,
+    };
+    let mut args = args.into_iter();
+    while let Some(flag) = args.next() {
+        let mut value = || args.next().ok_or_else(|| format!("{flag} needs a value"));
+        match flag.as_str() {
+            "--input" => a.input = value()?.into(),
+            "--out" => a.out = value()?.into(),
+            "--title" => a.title = Some(value()?),
+            "--repo" => a.repo = Some(value()?),
+            "--base-url" => a.base_url = Some(value()?),
+            "--threshold" => {
+                a.threshold = value()?
+                    .parse::<f64>()
+                    .ok()
+                    .filter(|t| t.is_finite() && *t >= 0.0)
+                    .ok_or("--threshold must be a non-negative number")?;
+            }
+            "--port" => a.port = value()?.parse().map_err(|_| "--port must be 0-65535")?,
+            other => return Err(format!("unknown argument `{other}`")),
+        }
+    }
+    Ok(a)
+}
+
+fn build(a: &Args) -> Result<(), String> {
+    let source = a.input.join("tpt-benchmark.json");
+    let text = fs::read_to_string(&source).map_err(|e| {
+        format!(
+            "cannot read {}: {e}\nRun `cargo bench` first. Output is written to `target/tpt-benchmark/` \
+             relative to the directory the bench runs in (for a workspace member, that is the crate's \
+             directory). Use --input to point elsewhere.",
+            source.display()
+        )
+    })?;
+    let now = "1970-01-01T00:00:00Z";
+    let latest = model::parse(&text, "tpt-benchmark.json", now)?;
+    let file = model::data_file_name(&latest.env);
+
+    let data = a.out.join("data");
+    fs::create_dir_all(&data).map_err(|e| format!("{}: {e}", data.display()))?;
+    fs::write(data.join(&file), &text).map_err(|e| format!("{file}: {e}"))?;
+    let runs = model::load_history(&data).map_err(|e| format!("{}: {e}", data.display()))?;
+
+    let repo = a.repo.clone().or_else(project::default_repo_url);
+    let cfg = site::Config {
+        title: a
+            .title
+            .clone()
+            .unwrap_or_else(|| project::default_title(std::path::Path::new("."))),
+        base_url: a
+            .base_url
+            .clone()
+            .or_else(|| repo.as_deref().and_then(project::pages_url))
+            .map(|u| if u.ends_with('/') { u } else { format!("{u}/") }),
+        repo,
+        threshold_pct: a.threshold,
+    };
+    let regressions = site::build(&a.out, &runs, &cfg).map_err(|e| e.to_string())?;
+    println!("Wrote {} ({} runs in history)", a.out.display(), runs.len());
+    for r in &regressions {
+        println!("regression vs previous run: {r}");
+    }
+    Ok(())
+}
+
+fn main() -> ExitCode {
+    let mut args = std::env::args().skip(1);
+    let command = args.next();
+    let result = match command.as_deref() {
+        Some("build") => parse(args).and_then(|a| build(&a)),
+        Some("serve") => {
+            parse(args).and_then(|a| serve::serve(&a.out, a.port).map_err(|e| e.to_string()))
+        }
+        Some("--help" | "-h" | "help") => {
+            println!("{USAGE}");
+            return ExitCode::SUCCESS;
+        }
+        _ => Err("expected `build` or `serve`".to_owned()),
+    };
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(message) => {
+            eprintln!("error: {message}\n\n{USAGE}");
+            ExitCode::from(2)
+        }
+    }
+}

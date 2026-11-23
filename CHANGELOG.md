@@ -9,6 +9,10 @@ minor versions may contain breaking changes.
 
 ### Added
 
+- `tpt-site` (not published; install with `cargo install --git`): `tpt-site build`
+  turns the JSON export into a static site (index, one page per benchmark with
+  per-machine history charts, sitemap, robots.txt, OpenGraph and JSON-LD) and
+  keeps every run under `data/` so trends accumulate. `tpt-site serve` previews it.
 - JSON export schema 2: an `environment` block (commit, timestamp, OS, arch, CPU,
   cores, rustc, clock source, runner). The `benchmarks` layout is unchanged, so
   schema 1 readers keep working. See `docs/json-schema.md`.
@@ -61,3 +65,9 @@ minor versions may contain breaking changes.
 - A Bayesian stopping rule. The engine uses the precision rule.
 - Hardware counters on macOS and Windows.
 - Named baseline import and export across commits.
+
+### Fixed
+
+- `Summary` could not read back numbers the JSON export writes as `null`
+  (non-finite values such as the std dev of a zero-allocation layer), which broke
+  loading such exports and baselines. They now read back as `NaN`.

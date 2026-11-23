@@ -147,9 +147,9 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 ## Phase 7 — Benchmark site on GitHub Pages (git-installed, no crates.io)
 Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML. See plan in `.claude/plans/` (do-you-think-we-cosmic-lollipop.md).
 - [x] JSON schema v2 (additive): `environment` block (commit, timestamp, os, cpu, cores, rustc, clock source, runner) in `crates/tpt-benchmark/src/json.rs`; update golden test, `docs/json-schema.md`, CHANGELOG; v1 stays readable DONE: `crates/tpt-benchmark/src/environment.rs`; v1 stays readable by ignoring the new field
-- [ ] `crates/tpt-site` (`publish = false`, installable via `cargo install --git`): `tpt-site build` / `serve`, zero config (title from Cargo.toml, repo URL from git remote)
-- [ ] Static output: trend charts, per-benchmark pages, raw JSON links, `sitemap.xml`, `robots.txt`, OpenGraph + JSON-LD; reuse `report/html.rs` and `report/svg.rs`
-- [ ] History kept under `data/` on the `gh-pages` branch (no extra branch/database)
+- [x] `crates/tpt-site` (`publish = false`, installable via `cargo install --git`): `tpt-site build` / `serve`, zero config (title from Cargo.toml, repo URL from git remote)
+- [x] Static output: trend charts, per-benchmark pages, raw JSON links, `sitemap.xml`, `robots.txt`, OpenGraph + JSON-LD; reuse `report/html.rs` and `report/svg.rs` (via the doc-hidden `report::site_support`)
+- [x] History kept under `data/` (build side done: existing files are kept; the gh-pages checkout/deploy belongs to action.yml) on the `gh-pages` branch (no extra branch/database)
 - [ ] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, deploy Pages); inputs: `bench`, `os`, `title`, `threshold`; default ubuntu only
 - [ ] Fail job on regression via existing `--baseline`/`--threshold` exit code
 - [ ] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual)

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/tpt-benchmark", "crates/tpt-benchmark-macros"]
+members = ["crates/tpt-benchmark", "crates/tpt-benchmark-macros", "crates/tpt-site"]
 
 [workspace.package]
 version = "0.1.0"
