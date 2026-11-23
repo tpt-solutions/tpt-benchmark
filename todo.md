@@ -150,10 +150,10 @@ Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML
 - [x] `crates/tpt-site` (`publish = false`, installable via `cargo install --git`): `tpt-site build` / `serve`, zero config (title from Cargo.toml, repo URL from git remote)
 - [x] Static output: trend charts, per-benchmark pages, raw JSON links, `sitemap.xml`, `robots.txt`, OpenGraph + JSON-LD; reuse `report/html.rs` and `report/svg.rs` (via the doc-hidden `report::site_support`)
 - [x] History kept under `data/` (build side done: existing files are kept; the gh-pages checkout/deploy belongs to action.yml) on the `gh-pages` branch (no extra branch/database)
-- [ ] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, deploy Pages); inputs: `bench`, `os`, `title`, `threshold`; default ubuntu only
-- [ ] Fail job on regression via existing `--baseline`/`--threshold` exit code
-- [ ] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual)
-- [ ] README section "Publish results to GitHub Pages" with the short snippet
+- [x] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, push to gh-pages); inputs: `bench`, `bench-args`, `title`, `threshold`, `publish`, `branch`. A composite action cannot pick the runner, so multi-OS is a caller matrix with `max-parallel: 1` (documented in the README). Shell logic tested locally against a bare origin; not yet run on GitHub
+- [x] Fail job on regression: done with `tpt-site build --threshold N --fail-on-regression` (compares with the previous run on the same machine from the stored history) instead of the `--baseline` exit code, which needs a baseline file the site does not keep
+- [x] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual). Needs a one-time repo setting: Pages from the `gh-pages` branch. Not yet run on GitHub
+- [x] README section "Publish results to GitHub Pages" with the short snippet
 - [ ] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question
 - [ ] Optional later: curated SEO "atlas" pages in this repo only (Vec vs VecDeque, HashMap hashers, string building, ...) with hand-written intros and a data-quality gate
 - [ ] Optional later: render `docs/*.md` on the same site (covers Phase 5 mdBook item)

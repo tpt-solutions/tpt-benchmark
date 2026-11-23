@@ -12,7 +12,10 @@ minor versions may contain breaking changes.
 - `tpt-site` (not published; install with `cargo install --git`): `tpt-site build`
   turns the JSON export into a static site (index, one page per benchmark with
   per-machine history charts, sitemap, robots.txt, OpenGraph and JSON-LD) and
-  keeps every run under `data/` so trends accumulate. `tpt-site serve` previews it.
+  keeps every run under `data/` so trends accumulate. `tpt-site serve` previews it. `--fail-on-regression` exits non-zero when the newest run is slower
+  than the previous run on the same machine by more than `--threshold`.
+- Composite GitHub Action (`action.yml`) that runs benches, keeps history on the
+  `gh-pages` branch and publishes the site, plus a `pages.yml` workflow for this repo.
 - JSON export schema 2: an `environment` block (commit, timestamp, OS, arch, CPU,
   cores, rustc, clock source, runner). The `benchmarks` layout is unchanged, so
   schema 1 readers keep working. See `docs/json-schema.md`.

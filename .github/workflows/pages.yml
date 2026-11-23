@@ -1,0 +1,31 @@
+name: Benchmark site
+
+# Publishes benchmark trends to the gh-pages branch. One-time setup: in the
+# repository settings, set Pages to deploy from the `gh-pages` branch.
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+# Only one run at a time, so two runs never push to gh-pages at once.
+concurrency:
+  group: benchmark-site
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - uses: ./
+        with:
+          bench: macros_demo
+          title: tpt-benchmark
+          tpt-site-path: crates/tpt-site

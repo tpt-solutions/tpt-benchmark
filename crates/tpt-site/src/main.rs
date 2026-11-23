@@ -1,7 +1,7 @@
 //! `tpt-site`: turns tpt-benchmark JSON exports into a static trend site.
 //!
 //! ```text
-//! tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT]
+//! tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression]
 //! tpt-site serve [--out DIR] [--port N]
 //! ```
 //!
@@ -19,8 +19,11 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT]
+  tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression]
   tpt-site serve [--out DIR] [--port N]
+
+--fail-on-regression exits with status 1 (after writing the site) when the newest run is
+slower than the previous run on the same machine by more than --threshold.
 
 defaults: --input target/tpt-benchmark, --out site, --threshold 5, title from Cargo.toml,
 repo from the git remote `origin`, base URL derived from a github.com repo.";
@@ -32,6 +35,7 @@ struct Args {
     repo: Option<String>,
     base_url: Option<String>,
     threshold: f64,
+    fail_on_regression: bool,
     port: u16,
 }
 
@@ -43,6 +47,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
         repo: None,
         base_url: None,
         threshold: 5.0,
+        fail_on_regression: false,
         port: 8000,
     };
     let mut args = args.into_iter();
@@ -61,6 +66,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
                     .filter(|t| t.is_finite() && *t >= 0.0)
                     .ok_or("--threshold must be a non-negative number")?;
             }
+            "--fail-on-regression" => a.fail_on_regression = true,
             "--port" => a.port = value()?.parse().map_err(|_| "--port must be 0-65535")?,
             other => return Err(format!("unknown argument `{other}`")),
         }
@@ -68,7 +74,8 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
     Ok(a)
 }
 
-fn build(a: &Args) -> Result<(), String> {
+/// Builds the site. Returns the number of regressions found.
+fn build(a: &Args) -> Result<usize, String> {
     let source = a.input.join("tpt-benchmark.json");
     let text = fs::read_to_string(&source).map_err(|e| {
         format!(
@@ -106,14 +113,21 @@ fn build(a: &Args) -> Result<(), String> {
     for r in &regressions {
         println!("regression vs previous run: {r}");
     }
-    Ok(())
+    Ok(regressions.len())
 }
 
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
     let command = args.next();
     let result = match command.as_deref() {
-        Some("build") => parse(args).and_then(|a| build(&a)),
+        Some("build") => parse(args).and_then(|a| {
+            let regressions = build(&a)?;
+            if a.fail_on_regression && regressions > 0 {
+                eprintln!("{regressions} regression(s) beyond {}%", a.threshold);
+                return Err(String::new());
+            }
+            Ok(())
+        }),
         Some("serve") => {
             parse(args).and_then(|a| serve::serve(&a.out, a.port).map_err(|e| e.to_string()))
         }
@@ -125,6 +139,7 @@ fn main() -> ExitCode {
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
+        Err(message) if message.is_empty() => ExitCode::FAILURE,
         Err(message) => {
             eprintln!("error: {message}\n\n{USAGE}");
             ExitCode::from(2)

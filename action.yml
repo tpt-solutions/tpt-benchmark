@@ -1,0 +1,130 @@
+name: tpt-benchmark site
+description: >-
+  Run tpt-benchmark benches, add the results to a history kept on the gh-pages
+  branch, and publish a benchmark trend site with GitHub Pages.
+author: TPT Solutions
+
+inputs:
+  bench:
+    description: >-
+      Space-separated bench target names to run, one `cargo bench --bench NAME`
+      each. Leave empty to run a plain `cargo bench`. List targets explicitly
+      when a crate has several tpt-benchmark targets, because each target
+      overwrites the previous one's export.
+    default: ""
+  bench-args:
+    description: Extra arguments passed to each bench binary, for example `--quick`.
+    default: ""
+  title:
+    description: Site title. Defaults to the package name in Cargo.toml.
+    default: ""
+  threshold:
+    description: >-
+      Regression threshold in percent. When set, the step fails if a benchmark
+      is slower than on the previous run on the same machine by more than this
+      (and the 95 % intervals do not overlap). The site is still published.
+      When empty, regressions are shown but never fail the job.
+    default: ""
+  publish:
+    description: Push the site to the gh-pages branch. Set to `false` for a dry run.
+    default: "true"
+  branch:
+    description: Branch that holds the site and its history.
+    default: gh-pages
+  tpt-site-path:
+    description: Install tpt-site from this local path instead of from git. Used by the tpt-benchmark repository itself.
+    default: ""
+  tpt-site-ref:
+    description: Branch or tag of tpt-solutions/tpt-benchmark to install tpt-site from.
+    default: master
+
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Install tpt-site
+      shell: bash
+      env:
+        SITE_PATH: ${{ inputs.tpt-site-path }}
+        SITE_REF: ${{ inputs.tpt-site-ref }}
+      run: |
+        if [ -n "$SITE_PATH" ]; then
+          cargo install --path "$SITE_PATH" --locked
+        else
+          cargo install --git https://github.com/tpt-solutions/tpt-benchmark \
+            --branch "$SITE_REF" --locked tpt-site
+        fi
+
+    - name: Run benchmarks and build the site
+      shell: bash
+      env:
+        BENCHES: ${{ inputs.bench }}
+        BENCH_ARGS: ${{ inputs.bench-args }}
+        TITLE: ${{ inputs.title }}
+        THRESHOLD: ${{ inputs.threshold }}
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        set -u
+        site="$RUNNER_TEMP/tpt-site-branch"
+        git fetch origin "$BRANCH" 2>/dev/null || true
+        if git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null; then
+          git worktree add -B "$BRANCH" "$site" "origin/$BRANCH"
+        else
+          # `worktree add --orphan` needs Git 2.42, so build the orphan branch by hand.
+          git worktree add --detach "$site"
+          git -C "$site" checkout --orphan "$BRANCH"
+          git -C "$site" rm -rf --quiet . || true
+        fi
+
+        build_args=(--out "$site")
+        [ -n "$TITLE" ] && build_args+=(--title "$TITLE")
+        [ -n "$THRESHOLD" ] && build_args+=(--threshold "$THRESHOLD" --fail-on-regression)
+
+        status=0
+        build_one() {
+          # The export lands in `target/tpt-benchmark/` of the package that ran.
+          export_file=$(find . -path '*/target/tpt-benchmark/tpt-benchmark.json' -print0 \
+            | xargs -0 -r ls -t 2>/dev/null | head -n 1 || true)
+          if [ -z "$export_file" ]; then
+            echo "::error::no tpt-benchmark.json found after running the benchmarks"
+            status=1
+            return
+          fi
+          tpt-site build --input "$(dirname "$export_file")" "${build_args[@]}" || status=$?
+        }
+
+        if [ -z "$BENCHES" ]; then
+          # shellcheck disable=SC2086
+          cargo bench -- $BENCH_ARGS
+          build_one
+        else
+          for name in $BENCHES; do
+            # shellcheck disable=SC2086
+            cargo bench --bench "$name" -- $BENCH_ARGS
+            build_one
+          done
+        fi
+        echo "SITE_DIR=$site" >> "$GITHUB_ENV"
+        echo "BUILD_STATUS=$status" >> "$GITHUB_ENV"
+
+    - name: Publish to the site branch
+      if: inputs.publish == 'true'
+      shell: bash
+      env:
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        cd "$SITE_DIR"
+        git add -A
+        if git diff --cached --quiet; then
+          echo "Nothing to publish."
+        else
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Update benchmarks for ${GITHUB_SHA}"
+          git push origin "HEAD:$BRANCH"
+        fi
+
+    - name: Report regressions
+      shell: bash
+      run: exit "${BUILD_STATUS:-0}"

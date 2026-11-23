@@ -60,6 +60,50 @@ Run it with `cargo bench`. Useful flags:
 Output is written to `target/tpt-benchmark/`: a JSON export
 (`tpt-benchmark.json`), baselines, and an HTML report.
 
+## Publish results to GitHub Pages
+
+Any repository can publish a benchmark trend site from a short workflow. The
+action runs your benches, adds the results to a history kept on the `gh-pages`
+branch, and rebuilds the site. Nothing is installed from crates.io.
+
+```yaml
+name: Benchmarks
+on:
+  push: { branches: [main] }
+  schedule: [{ cron: "0 5 * * 1" }]
+permissions:
+  contents: write
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tpt-solutions/tpt-benchmark@master
+        with: { bench: sums }   # your bench target name(s)
+```
+
+Then set Pages to deploy from the `gh-pages` branch in the repository settings.
+
+Inputs: `bench` (space-separated bench targets; empty runs a plain
+`cargo bench`), `bench-args` (for example `--quick`), `title`, `threshold`
+(fail the job when a benchmark is slower than the previous run on the same
+machine by more than this many percent), `publish` (`false` for a dry run) and
+`branch`. For several operating systems, use a matrix with `max-parallel: 1`
+so the runs push one at a time. Runs from different machines are charted
+separately.
+
+Hosted runners are noisy and usually have no hardware counters, so read the
+trend on one machine rather than the absolute numbers.
+
+To build the site locally:
+
+```sh
+cargo install --git https://github.com/tpt-solutions/tpt-benchmark tpt-site
+cargo bench
+tpt-site build --input target/tpt-benchmark   # writes site/
+tpt-site serve                                # http://127.0.0.1:8000/
+```
+
 ## Migrating from Criterion
 
 The `#[tpt_bench]` API and CLI flags follow Criterion's conventions where that
