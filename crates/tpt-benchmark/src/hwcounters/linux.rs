@@ -74,6 +74,13 @@ pub(crate) struct Perf {
 impl Perf {
     /// Opens a counter for the calling thread, or explains why it cannot.
     pub(crate) fn open(counter: Counter) -> Result<Self, Unavailable> {
+        // Miri cannot run the `perf_event_open` syscall, so report the counter as
+        // unavailable, which is the same graceful path a locked-down host takes.
+        if cfg!(miri) {
+            return Err(Unavailable {
+                reason: format!("{counter:?}: syscalls are not available under Miri"),
+            });
+        }
         let EventSpec { event_type, config } = event_spec(counter);
         let attr = PerfEventAttr {
             event_type,
@@ -157,5 +164,18 @@ impl Drop for Perf {
         unsafe {
             libc::close(self.fd);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The kernel ABI fixes this size (`PERF_ATTR_SIZE_VER5`). The `size`
+    /// field passed to `perf_event_open` is `size_of::<PerfEventAttr>()`, so a
+    /// field edit that changes it must be a deliberate decision.
+    #[test]
+    fn perf_event_attr_matches_the_kernel_abi_size() {
+        assert_eq!(size_of::<PerfEventAttr>(), 112);
     }
 }

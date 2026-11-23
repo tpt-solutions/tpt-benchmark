@@ -15,6 +15,7 @@
 //! validate their input and leave the item unchanged.
 
 #![deny(missing_docs)]
+#![forbid(unsafe_code)]
 
 use proc_macro::TokenStream;
 

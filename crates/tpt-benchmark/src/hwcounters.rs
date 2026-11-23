@@ -57,10 +57,23 @@ impl SampleData for HwSample {
 /// The counter is opened for the thread that calls [`HardwareCounter::try_new`]
 /// and counts that thread only. Create the layer on the thread that runs the
 /// benchmark batches.
+///
+/// It is tied to the thread that created it, so it is neither `Send` nor `Sync`:
+///
+/// ```compile_fail
+/// fn assert_send<T: Send>() {}
+/// assert_send::<tpt_benchmark::HardwareCounter>();
+/// ```
 #[derive(Debug)]
 pub struct HardwareCounter {
     counter: Counter,
     backend: Backend,
+    /// A hardware counter follows the thread that opened it, so reading it
+    /// from another thread would silently measure the wrong thread. The
+    /// raw-pointer marker makes `HardwareCounter` neither `Send` nor `Sync` on
+    /// every platform, so that mistake does not compile (and the auto traits
+    /// do not differ between operating systems).
+    _thread_bound: std::marker::PhantomData<*const ()>,
 }
 
 impl HardwareCounter {
@@ -81,7 +94,11 @@ impl HardwareCounter {
     /// access, or the CPU or hypervisor does not expose the event.
     pub fn try_new(counter: Counter) -> Result<Self, Unavailable> {
         let backend = Backend::open(counter)?;
-        Ok(Self { counter, backend })
+        Ok(Self {
+            counter,
+            backend,
+            _thread_bound: std::marker::PhantomData,
+        })
     }
 }
 

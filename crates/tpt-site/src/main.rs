@@ -9,6 +9,8 @@
 //! files are kept, so history accumulates across builds) and regenerates the
 //! site.
 
+#![forbid(unsafe_code)]
+
 mod docs;
 mod model;
 mod project;

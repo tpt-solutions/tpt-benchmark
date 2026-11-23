@@ -76,6 +76,12 @@ impl Clock {
 
 /// Attempts the hardware counters; `None` if none is trustworthy here.
 fn hardware_clock() -> Option<Clock> {
+    // Miri cannot execute inline assembly (CPUID, RDTSC, MRS), so under it the
+    // portable `Instant` clock stands in. The asm blocks are covered by review
+    // and by cross-target builds; see docs/unsafe-policy.md.
+    if cfg!(miri) {
+        return None;
+    }
     #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
     {
         if invariant_tsc_supported() {
@@ -150,7 +156,8 @@ fn invariant_tsc_supported() -> bool {
 #[allow(unused_unsafe)]
 fn invariant_tsc_supported() -> bool {
     use std::arch::x86::__cpuid;
-    // SAFETY: as for the x86_64 variant.
+    // SAFETY: as for the x86_64 variant. On 32-bit x86 CPUID is assumed present,
+    // since the CPUs Rust's x86 targets can realistically run on have it.
     unsafe {
         if __cpuid(0x8000_0000).eax < 0x8000_0007 {
             return false;
@@ -179,24 +186,29 @@ fn raw_ticks(source: ClockSource) -> u64 {
     match source {
         #[cfg(target_arch = "x86_64")]
         ClockSource::Tsc => {
-            // SAFETY: RDTSC has no preconditions. It is only selected after the
-            // invariant-TSC check in `hardware_clock`.
+            // SAFETY: RDTSC has no memory effects. It faults only when user-space
+            // RDTSC has been disabled (for example `prctl(PR_SET_TSC)` or some
+            // sandboxes and replay tools); see docs/unsafe-policy.md. It is only
+            // selected after the invariant-TSC check in `hardware_clock`.
             unsafe { std::arch::x86_64::_rdtsc() }
         }
         #[cfg(target_arch = "x86")]
         ClockSource::Tsc => {
-            // SAFETY: as above.
+            // SAFETY: as for x86_64, including the caveat about disabled RDTSC.
             unsafe { std::arch::x86::_rdtsc() }
         }
         #[cfg(target_arch = "aarch64")]
         ClockSource::CntVct => {
             let ticks: u64;
-            // SAFETY: reading CNTVCT_EL0 has no side effects.
+            // SAFETY: reading CNTVCT_EL0 has no side effects and is readable at
+            // EL0 on the platforms this crate targets. `nomem` is left off on
+            // purpose: without it the compiler treats the read as touching
+            // memory, so it cannot move the measured loads and stores across it.
             unsafe {
                 core::arch::asm!(
                     "mrs {}, cntvct_el0",
                     out(reg) ticks,
-                    options(nomem, nostack, preserves_flags)
+                    options(nostack, preserves_flags)
                 );
             }
             ticks

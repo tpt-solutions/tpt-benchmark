@@ -72,6 +72,14 @@ minor versions may contain breaking changes.
 - Hardware counters on macOS and Windows.
 - Named baseline import and export across commits.
 
+### Changed
+
+- **Breaking:** `MeasurementLayer` no longer requires `Send + Sync`. The framework never
+  moves a layer between threads, and a hardware counter follows the thread that opened
+  it. `HardwareCounter` is now neither `Send` nor `Sync` on every platform.
+- The no-op waker behind `Bencher::iter_async` uses `Waker::noop()`, removing a block of `unsafe`.
+- `docs/unsafe-policy.md` now records an audit of every `unsafe` site and the known limitations.
+
 ### Fixed
 
 - `Summary` could not read back numbers the JSON export writes as `null`

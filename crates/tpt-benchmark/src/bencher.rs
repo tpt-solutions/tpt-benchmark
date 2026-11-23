@@ -8,7 +8,7 @@ use crate::layer::{ErasedLayer, MeasurementLayer};
 use crate::stats::{Summary, Welford, ci_half_width_95, median};
 use crate::throughput::Throughput;
 use std::future::Future;
-use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+use std::task::{Context, Poll, Waker};
 
 /// Tunables for one measurement run.
 #[derive(Clone, Debug, PartialEq)]
@@ -220,19 +220,8 @@ fn sample(
 
 /// Busy-polls a future with a no-op waker until it completes.
 fn block_on_busy<Fut: Future>(fut: Fut) -> Fut::Output {
-    fn noop_raw_waker() -> RawWaker {
-        fn clone(_: *const ()) -> RawWaker {
-            noop_raw_waker()
-        }
-        fn noop(_: *const ()) {}
-        static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, noop, noop, noop);
-        RawWaker::new(std::ptr::null(), &VTABLE)
-    }
-    // SAFETY: every vtable function is a no-op that ignores the data pointer,
-    // so the waker meets the RawWaker contract for any use.
-    #[allow(unsafe_code)]
-    let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
-    let mut cx = Context::from_waker(&waker);
+    // `Waker::noop` is stable from Rust 1.85, the MSRV, so no `unsafe` is needed.
+    let mut cx = Context::from_waker(Waker::noop());
     let mut fut = std::pin::pin!(fut);
     loop {
         if let Poll::Ready(out) = fut.as_mut().poll(&mut cx) {

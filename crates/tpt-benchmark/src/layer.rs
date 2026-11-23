@@ -13,7 +13,12 @@ pub trait SampleData: Copy + Send + Sync + 'static {
 ///
 /// Layers are independent: each benchmark run activates one layer, and the
 /// framework re-runs the benchmark for every additional layer.
-pub trait MeasurementLayer: Send + Sync {
+///
+/// A layer is created and used on one thread: the framework never moves it to
+/// another thread, so it does not have to be `Send` or `Sync`. That lets a
+/// layer hold thread-bound state, such as a hardware counter that follows the
+/// thread that opened it.
+pub trait MeasurementLayer {
     /// The per-batch sample this layer produces.
     type Sample: SampleData;
 

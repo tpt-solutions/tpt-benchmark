@@ -121,8 +121,8 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] **Milestone:** reports complete
 
 ## Phase 5 — Hardening, Docs, Migration (Weeks 13–14)
-- [ ] Audit all `unsafe` code (TSC, allocator, FFI for perf/kperf/PMC); document invariants
-- [ ] Miri / sanitizer runs where applicable
+- [x] Audit all `unsafe` code (TSC, allocator, FFI for perf/kperf/PMC); document invariants. Done for what exists (no kperf/PMC code yet): see `docs/unsafe-policy.md` for the per-site table, the changes it led to and the known limitations
+- [ ] Miri / sanitizer runs where applicable. Miri job added to CI (Linux, `continue-on-error` until its first green run); the clock falls back to `Instant` and perf reports unavailable under Miri. Sanitizers not done
 - [ ] Cross-platform test matrix incl. aarch64 (Linux + Apple Silicon + Windows-on-ARM if feasible)
 - [ ] Stress tests: noisy machine, very fast (<1 ns) and very slow (>1 s) benchmarks
 - [ ] Performance validation: confirm "15 s → 2–3 s" claim on a defined suite, with identical 95% CI

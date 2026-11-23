@@ -52,3 +52,23 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
+
+  miri:
+    name: Miri (Linux)
+    runs-on: ubuntu-latest
+    # Not yet run on GitHub. Remove `continue-on-error` after the first green run.
+    continue-on-error: true
+    env:
+      # Isolation off so the baseline tests can use the real temp directory.
+      MIRIFLAGS: "-Zmiri-disable-isolation -Zmiri-strict-provenance"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      # The stress tests are timing-based and too slow under Miri, so they are skipped.
+      # Under Miri the clock uses `Instant` and the perf counter reports itself
+      # unavailable, because Miri cannot run inline asm or `perf_event_open`.
+      - name: Miri tests
+        run: cargo miri test -p tpt-benchmark --lib --test alloc_counting
