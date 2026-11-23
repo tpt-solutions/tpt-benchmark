@@ -25,7 +25,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [x] Verify `cargo deny` treats `MIT OR Apache-2.0` crates as OK, and Apache-2.0-only crates fail (test with a throwaway dep)
 - [x] Update spec.txt wording (MIT-only → dual MIT/Apache; output dir; plotters election note)
 - [x] `rustfmt.toml`, clippy config, `#![forbid(unsafe_code)]` where possible, document every `unsafe` block policy
-- [x] GitHub Actions: fmt, clippy, test, doc on Linux/macOS/Windows (`.github/workflows/ci.yml`; not yet run on GitHub)
+- [x] GitHub Actions: fmt, clippy, test, doc on Linux/macOS/Windows (`.github/workflows/ci.yml`; green on GitHub)
 - [x] GitHub Actions: `cargo deny check` job
 - [x] GitHub Actions: MSRV 1.85 job
 - [x] CONTRIBUTING.md (issues-only policy), issue templates. DECIDED: no PR template, since PRs are not accepted
@@ -150,9 +150,9 @@ Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML
 - [x] `crates/tpt-site` (`publish = false`, installable via `cargo install --git`): `tpt-site build` / `serve`, zero config (title from Cargo.toml, repo URL from git remote)
 - [x] Static output: trend charts, per-benchmark pages, raw JSON links, `sitemap.xml`, `robots.txt`, OpenGraph + JSON-LD; reuse `report/html.rs` and `report/svg.rs` (via the doc-hidden `report::site_support`)
 - [x] History kept under `data/` (build side done: existing files are kept; the gh-pages checkout/deploy belongs to action.yml) on the `gh-pages` branch (no extra branch/database)
-- [x] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, push to gh-pages); inputs: `bench`, `bench-args`, `title`, `threshold`, `publish`, `branch`. A composite action cannot pick the runner, so multi-OS is a caller matrix with `max-parallel: 1` (documented in the README). Shell logic tested locally against a bare origin; not yet run on GitHub
+- [x] Reusable composite `action.yml` (install tpt-site from git, `cargo bench`, build, push to gh-pages); inputs: `bench`, `bench-args`, `title`, `threshold`, `publish`, `branch`. A composite action cannot pick the runner, so multi-OS is a caller matrix with `max-parallel: 1` (documented in the README). Shell logic tested locally against a bare origin; the dogfood workflow ran green on GitHub
 - [x] Fail job on regression: done with `tpt-site build --threshold N --fail-on-regression` (compares with the previous run on the same machine from the stored history) instead of the `--baseline` exit code, which needs a baseline file the site does not keep
-- [x] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual). Needs a one-time repo setting: Pages from the `gh-pages` branch. Not yet run on GitHub
+- [x] Dogfood: `.github/workflows/pages.yml` (weekly + push to master + manual). Needs a one-time repo setting: Pages from the `gh-pages` branch. Ran green on GitHub; still to confirm: Pages serves from gh-pages, history grows on a second run, and a second repo can use the action
 - [x] README section "Publish results to GitHub Pages" with the short snippet
 - [x] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question ("About these numbers" on the index page; the figures in it are copied from docs/comparison-criterion.md and need updating if that changes)
 - [ ] Optional later: curated SEO "atlas" pages in this repo only (Vec vs VecDeque, HashMap hashers, string building, ...) with hand-written intros and a data-quality gate
