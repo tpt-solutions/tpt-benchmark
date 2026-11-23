@@ -60,6 +60,19 @@ Run it with `cargo bench`. Useful flags:
 Output is written to `target/tpt-benchmark/`: a JSON export
 (`tpt-benchmark.json`), baselines, and an HTML report.
 
+## Examples
+
+Runnable examples are in
+[`crates/tpt-benchmark/examples/`](crates/tpt-benchmark/examples/). From a
+clone of this repository:
+
+| Example | Shows | Run |
+|---------|-------|-----|
+| `quickstart` | one parameterised benchmark with throughput | `cargo run --release --example quickstart -- --quick` |
+| `allocations` | counting allocations, a function that allocates nothing | `cargo run --release --example allocations -- --quick` |
+| `batched_and_async` | per-iteration setup outside the timing, async routines | `cargo run --release --example batched_and_async -- --quick` |
+| `measure_directly` | the engine as a library: `measure()` and the `Summary` | `cargo run --release --example measure_directly` |
+
 ## Publish results to GitHub Pages
 
 Any repository can publish a benchmark trend site from a short workflow. The
@@ -107,8 +120,9 @@ tpt-site serve                                # http://127.0.0.1:8000/
 ## Migrating from Criterion
 
 The `#[tpt_bench]` API and CLI flags follow Criterion's conventions where that
-is practical. Differences are listed in the migration guide, which is still to
-be written.
+is practical. The differences, a table mapping Criterion's API to this one, and
+short notes for Divan and Iai users are in
+[`docs/migrating-from-criterion.md`](docs/migrating-from-criterion.md).
 
 ## Minimum supported Rust version
 

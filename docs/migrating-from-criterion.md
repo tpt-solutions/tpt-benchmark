@@ -191,3 +191,65 @@ crate. They have not been implemented.
 
 If your suite uses one of these, plan to keep it on Criterion until it is
 supported.
+
+## Notes for Divan and Iai users
+
+The tool-side names below come from those projects' public documentation as we
+know it. They were not re-checked against a current release, so confirm them
+upstream. The `tpt-benchmark` side was checked against the source.
+
+### Coming from Divan
+
+Divan and `tpt-benchmark` both use attribute macros and a `harness = false`
+bench target, so the shape of a suite carries over.
+
+| Divan | tpt-benchmark |
+|-------|---------------|
+| `#[divan::bench]` on a function | `#[tpt_bench]`. The function must take `b: &mut Bencher` first. A function without that parameter is a compile error. |
+| `#[divan::bench(args = [...])]` | `#[tpt_bench(args = [...])]`. Each value becomes `name/<arg>`. |
+| `#[divan::bench_group]` on a module | `#[tpt_bench_group]` on a module. |
+| `fn main() { divan::main(); }` | `tpt_benchmark::main!(group, ...)`, naming each group module. |
+| `divan::black_box` | `tpt_benchmark::black_box`. |
+| `Bencher::with_inputs(..).bench_values(..)` | `b.iter_batched(setup, routine)`. Setup runs outside the timing. |
+| A routine that returns a value, benchmarked directly | `b.iter(\|\| routine())`. The return value goes through `black_box`. |
+| Throughput counters (bytes, items) | `b.throughput(Throughput::Bytes(n))` or `Throughput::Elements(n)`. The rate is in the summary and the JSON export, not yet in the terminal table. |
+| `AllocProfiler` as the global allocator | `CountingAllocator` as the global allocator, with the `Allocations` and `AllocBytes` layers. |
+
+Differences worth knowing:
+
+- **Generic benchmarks.** Divan can run one function over a list of types. There is
+  no equivalent here, so write one `#[tpt_bench]` function per type, or a macro of
+  your own.
+- **How a run ends.** Divan takes a fixed number of samples or a time budget.
+  `tpt-benchmark` stops when the 95 % interval is tight enough, with sample and
+  time caps. See [`statistics.md`](statistics.md).
+- **Threads.** Divan can run a benchmark on several threads at once. The
+  allocation layers here count only the thread that runs the batch.
+- **No Divan comparison has been run.** `comparison-criterion.md` records why Divan
+  stayed out of the comparison, so there are no figures here for how the two
+  agree.
+
+### Coming from Iai
+
+Iai (the original `iai` crate, and `iai-callgrind`) counts instructions and
+cache accesses by running the benchmark once under Valgrind. That gives a
+number that barely varies from run to run, which makes it a good fit for noisy
+CI machines. It does not measure time, and it needs Valgrind, so it does not run
+on Windows.
+
+`tpt-benchmark` is different in kind, not a replacement:
+
+- **Instructions.** The `HwInstructions` layer reads the CPU's instruction
+  counter through `perf_event_open`, so it only works on Linux with permission,
+  and not on most hosted CI runners (see
+  [`hardware-counters.md`](hardware-counters.md)). The value is a statistical
+  per-iteration mean with a confidence interval, and it includes any noise from
+  the real machine.
+- **No simulation.** There is no cache simulation and no Valgrind dependency.
+  Cache and branch misses are hardware counts, not modelled ones.
+- **Keep both if you need both.** If you want a deterministic instruction count in
+  CI, keep Iai for that. Use `tpt-benchmark` for wall-clock time, allocation counts
+  and, on a machine with counter access, instructions.
+
+There is no mechanical conversion. An Iai benchmark is a plain function, so wrap
+its body in `b.iter(|| ...)` inside a `#[tpt_bench]` function.

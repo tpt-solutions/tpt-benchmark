@@ -14,6 +14,8 @@
 //! `#[tpt_bench_group]`; `#[tpt_bench]` and `#[layers]` on their own only
 //! validate their input and leave the item unchanged.
 
+#![deny(missing_docs)]
+
 use proc_macro::TokenStream;
 
 mod bench;

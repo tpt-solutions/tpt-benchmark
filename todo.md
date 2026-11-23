@@ -127,10 +127,10 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] Stress tests: noisy machine, very fast (<1 ns) and very slow (>1 s) benchmarks
 - [ ] Performance validation: confirm "15 s → 2–3 s" claim on a defined suite, with identical 95% CI
 - [ ] Dogfood: write benchmarks for `tpt-math`, `tpt-cv`, `tpt-gis` (zero-alloc and SIMD instruction proofs)
-- [ ] rustdoc for all public items; `#![deny(missing_docs)]`
-- [ ] README, quickstart, examples directory
+- [x] rustdoc for all public items; `#![deny(missing_docs)]` (both library crates; the crate docs now have a "Where to start" section)
+- [x] README, quickstart, examples directory (`crates/tpt-benchmark/examples/`: quickstart, allocations, batched_and_async, measure_directly; compiled by `cargo test`)
 - [x] mdBook or docs pages: architecture, statistics method, layers, permissions per OS (Markdown in `docs/`, rendered by tpt-site; live once the Pages site is published)
-- [ ] Criterion → tpt-benchmark migration guide (and Divan/Iai notes)
+- [x] Criterion → tpt-benchmark migration guide (and Divan/Iai notes). Divan/Iai names are from memory of their docs and flagged as unchecked in the guide
 - [ ] CHANGELOG.md; semver and stability policy
 - [ ] Review the public API for 1.0 stability (trait signatures, `#[non_exhaustive]`)
 

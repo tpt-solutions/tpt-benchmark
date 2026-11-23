@@ -9,6 +9,9 @@ minor versions may contain breaking changes.
 
 ### Added
 
+- Examples in `crates/tpt-benchmark/examples/` (`quickstart`, `allocations`,
+  `batched_and_async`, `measure_directly`), and a "Where to start" section in the crate docs.
+- Notes for Divan and Iai users in `docs/migrating-from-criterion.md`.
 - `tpt-site` (not published; install with `cargo install --git`): `tpt-site build`
   turns the JSON export into a static site (index, one page per benchmark with
   per-machine history charts, sitemap, robots.txt, OpenGraph and JSON-LD) and
