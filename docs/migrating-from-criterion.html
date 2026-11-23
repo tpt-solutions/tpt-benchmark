@@ -244,6 +244,60 @@ replaced by a re-export.</li>
 </ul>
 <p>If your suite uses one of these, plan to keep it on Criterion until it is
 supported.</p>
+<h2 id="notes-for-divan-and-iai-users">Notes for Divan and Iai users</h2>
+<p>The tool-side names below come from those projects' public documentation as we
+know it. They were not re-checked against a current release, so confirm them
+upstream. The <code>tpt-benchmark</code> side was checked against the source.</p>
+<h3 id="coming-from-divan">Coming from Divan</h3>
+<p>Divan and <code>tpt-benchmark</code> both use attribute macros and a <code>harness = false</code>
+bench target, so the shape of a suite carries over.</p>
+<table><thead><tr><th>Divan</th><th>tpt-benchmark</th></tr></thead><tbody>
+<tr><td><code>#[divan::bench]</code> on a function</td><td><code>#[tpt_bench]</code>. The function must take <code>b: &amp;mut Bencher</code> first. A function without that parameter is a compile error.</td></tr>
+<tr><td><code>#[divan::bench(args = [...])]</code></td><td><code>#[tpt_bench(args = [...])]</code>. Each value becomes <code>name/&lt;arg&gt;</code>.</td></tr>
+<tr><td><code>#[divan::bench_group]</code> on a module</td><td><code>#[tpt_bench_group]</code> on a module.</td></tr>
+<tr><td><code>fn main() { divan::main(); }</code></td><td><code>tpt_benchmark::main!(group, ...)</code>, naming each group module.</td></tr>
+<tr><td><code>divan::black_box</code></td><td><code>tpt_benchmark::black_box</code>.</td></tr>
+<tr><td><code>Bencher::with_inputs(..).bench_values(..)</code></td><td><code>b.iter_batched(setup, routine)</code>. Setup runs outside the timing.</td></tr>
+<tr><td>A routine that returns a value, benchmarked directly</td><td><code>b.iter(|| routine())</code>. The return value goes through <code>black_box</code>.</td></tr>
+<tr><td>Throughput counters (bytes, items)</td><td><code>b.throughput(Throughput::Bytes(n))</code> or <code>Throughput::Elements(n)</code>. The rate is in the summary and the JSON export, not yet in the terminal table.</td></tr>
+<tr><td><code>AllocProfiler</code> as the global allocator</td><td><code>CountingAllocator</code> as the global allocator, with the <code>Allocations</code> and <code>AllocBytes</code> layers.</td></tr>
+</tbody></table>
+<p>Differences worth knowing:</p>
+<ul>
+<li><strong>Generic benchmarks.</strong> Divan can run one function over a list of types. There is
+no equivalent here, so write one <code>#[tpt_bench]</code> function per type, or a macro of
+your own.</li>
+<li><strong>How a run ends.</strong> Divan takes a fixed number of samples or a time budget.
+<code>tpt-benchmark</code> stops when the 95 % interval is tight enough, with sample and
+time caps. See <a href="statistics.html"><code>statistics.md</code></a>.</li>
+<li><strong>Threads.</strong> Divan can run a benchmark on several threads at once. The
+allocation layers here count only the thread that runs the batch.</li>
+<li><strong>No Divan comparison has been run.</strong> <code>comparison-criterion.md</code> records why Divan
+stayed out of the comparison, so there are no figures here for how the two
+agree.</li>
+</ul>
+<h3 id="coming-from-iai">Coming from Iai</h3>
+<p>Iai (the original <code>iai</code> crate, and <code>iai-callgrind</code>) counts instructions and
+cache accesses by running the benchmark once under Valgrind. That gives a
+number that barely varies from run to run, which makes it a good fit for noisy
+CI machines. It does not measure time, and it needs Valgrind, so it does not run
+on Windows.</p>
+<p><code>tpt-benchmark</code> is different in kind, not a replacement:</p>
+<ul>
+<li><strong>Instructions.</strong> The <code>HwInstructions</code> layer reads the CPU's instruction
+counter through <code>perf_event_open</code>, so it only works on Linux with permission,
+and not on most hosted CI runners (see
+<a href="hardware-counters.html"><code>hardware-counters.md</code></a>). The value is a statistical
+per-iteration mean with a confidence interval, and it includes any noise from
+the real machine.</li>
+<li><strong>No simulation.</strong> There is no cache simulation and no Valgrind dependency.
+Cache and branch misses are hardware counts, not modelled ones.</li>
+<li><strong>Keep both if you need both.</strong> If you want a deterministic instruction count in
+CI, keep Iai for that. Use <code>tpt-benchmark</code> for wall-clock time, allocation counts
+and, on a machine with counter access, instructions.</li>
+</ul>
+<p>There is no mechanical conversion. An Iai benchmark is a plain function, so wrap
+its body in <code>b.iter(|| ...)</code> inside a <code>#[tpt_bench]</code> function.</p>
 </article></main>
 <footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
 </body>

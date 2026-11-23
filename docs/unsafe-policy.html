@@ -93,41 +93,77 @@ footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size:
 <p><code>tpt-benchmark</code> keeps its <code>unsafe</code> surface as small as possible.</p>
 <h2 id="rules">Rules</h2>
 <ol>
-<li>The crate root has <code>#![deny(unsafe_code)]</code>. A module may opt in with
-<code>#[allow(unsafe_code)]</code>, and that attribute is only added to modules that
-need it: the clock, the allocator, and the hardware-counter backends.</li>
+<li><code>tpt-benchmark</code> has <code>#![deny(unsafe_code)]</code> at the crate root. A module may
+opt in with <code>#[allow(unsafe_code)]</code>, and only the modules listed below do.
+<code>tpt-benchmark-macros</code> and <code>tpt-site</code> have no <code>unsafe</code> and use
+<code>#![forbid(unsafe_code)]</code>.</li>
 <li>Every <code>unsafe</code> block carries a <code>// SAFETY:</code> comment that states the
 invariant it relies on and why it holds.</li>
-<li>Every <code>unsafe fn</code> documents its preconditions in a <code># Safety</code> rustdoc section.</li>
+<li>Every <code>pub unsafe fn</code> documents its preconditions in a <code># Safety</code> section.
+The crate has none. The <code>unsafe fn</code> methods of the <code>GlobalAlloc</code> impl take
+their contract from that trait.</li>
 <li><code>unsafe_op_in_unsafe_fn</code> is denied workspace-wide, so an unsafe operation
 inside an <code>unsafe fn</code> still needs its own block and comment.</li>
 <li>New <code>unsafe</code> needs a test or a documented reason it cannot be tested.</li>
+<li>Prefer a safe standard-library API when the MSRV allows it. (The no-op waker
+used to be hand-written <code>unsafe</code>; it is now <code>Waker::noop()</code>, stable from 1.85.)</li>
 </ol>
 <h2 id="inventory">Inventory</h2>
-<table><thead><tr><th>Module</th><th>Why it is unsafe</th></tr></thead><tbody>
-<tr><td><code>clock</code></td><td><code>RDTSC</code> and <code>CNTVCT_EL0</code>/<code>CNTFRQ_EL0</code> reads, and <code>CPUID</code></td></tr>
-<tr><td><code>alloc</code> (planned)</td><td><code>GlobalAlloc</code> implementation delegating to <code>System</code></td></tr>
-<tr><td><code>hwcounters</code> (planned)</td><td><code>perf_event_open</code>, <code>ioctl</code>, <code>read</code> on a file descriptor (Linux)</td></tr>
+<p>Audited on 2026-11-23 against the rules above. The audit was a manual review of
+every site, plus the checks listed under "How each is verified".</p>
+<table><thead><tr><th>Site</th><th>Unsafe operation</th><th>Why it is sound</th></tr></thead><tbody>
+<tr><td><code>clock.rs</code> <code>raw_ticks</code> (x86, x86_64)</td><td><code>_rdtsc()</code></td><td>No memory effects. Selected only after the invariant-TSC check. Faults if user-space RDTSC is disabled (see limitations).</td></tr>
+<tr><td><code>clock.rs</code> <code>invariant_tsc_supported</code> (x86, x86_64)</td><td><code>__cpuid</code> (unsafe on the 1.85 MSRV, safe on newer toolchains, hence <code>allow(unused_unsafe)</code>)</td><td>CPUID exists on every x86_64 CPU. On 32-bit x86 it is assumed present, since the CPUs Rust's x86 targets can realistically run on have it. The extended leaf is read only after confirming the CPU reports it.</td></tr>
+<tr><td><code>clock.rs</code> <code>raw_ticks</code>, <code>cntfrq</code> (aarch64)</td><td><code>mrs</code> of <code>CNTVCT_EL0</code> and <code>CNTFRQ_EL0</code></td><td>Side-effect free and readable at EL0 on Linux and macOS. Windows on ARM has not been checked. The <code>CNTVCT_EL0</code> read does not use <code>nomem</code>, so the compiler cannot move memory operations of the measured code across it.</td></tr>
+<tr><td><code>alloc/counting.rs</code> <code>impl GlobalAlloc</code></td><td><code>System.alloc</code>, <code>alloc_zeroed</code>, <code>dealloc</code>, <code>realloc</code></td><td>Each call forwards its arguments unchanged, so <code>System</code> sees exactly the contract the caller promised. The counters are <code>const</code>-initialised, destructor-free thread-locals read with <code>try_with</code>, so counting never allocates and cannot re-enter the allocator.</td></tr>
+<tr><td><code>hwcounters/linux.rs</code> <code>Perf::open</code></td><td><code>libc::syscall(SYS_perf_event_open, ..)</code></td><td><code>PerfEventAttr</code> is <code>repr(C)</code>, fully initialised, and its <code>size</code> field is <code>size_of</code> it. A unit test pins that size at 112 bytes (<code>PERF_ATTR_SIZE_VER5</code>). The kernel reads it only during the call.</td></tr>
+<tr><td><code>hwcounters/linux.rs</code> <code>Perf::read_now</code></td><td><code>libc::read</code></td><td>Reads exactly 24 bytes into a 24-byte buffer. A short read is treated as failure. The fd is owned and open.</td></tr>
+<tr><td><code>hwcounters/linux.rs</code> <code>Perf::drop</code></td><td><code>libc::close</code></td><td>The fd came from a successful open and <code>drop</code> runs once.</td></tr>
+<tr><td><code>report/win_console.rs</code></td><td><code>GetStdHandle</code>, <code>GetConsoleMode</code>, <code>SetConsoleMode</code></td><td>Documented kernel32 signatures. The handle is checked for null and <code>INVALID_HANDLE_VALUE</code>, and <code>SetConsoleMode</code> runs only on a handle <code>GetConsoleMode</code> accepted.</td></tr>
 </tbody></table>
-<h2 id="why-each-block-is-sound">Why each block is sound</h2>
+<h3 id="findings-from-the-audit-and-what-changed">Findings from the audit, and what changed</h3>
 <ul>
-<li><strong><code>RDTSC</code>/<code>RDPMC</code>-style reads</strong> have no memory effects and no preconditions
-on x86. The TSC is used only after CPUID confirms an invariant TSC.</li>
-<li><strong><code>CPUID</code></strong> is always available on x86 and x86_64. The extended leaf is
-queried only after the maximum extended leaf has been checked. On toolchains
-where <code>__cpuid</code> is safe, the block is still required for MSRV 1.85.</li>
-<li><strong><code>CNTVCT_EL0</code> / <code>CNTFRQ_EL0</code></strong> are readable at EL0 on the platforms this
-crate targets (Linux and macOS). They have no side effects.</li>
+<li><strong>Removed one <code>unsafe</code> block.</strong> The hand-written <code>RawWaker</code> in
+<code>Bencher::iter_async</code> is now <code>Waker::noop()</code>.</li>
+<li><strong>Corrected the <code>RDTSC</code> justification.</strong> It said "no preconditions". It can
+fault when user-space <code>RDTSC</code> is disabled, which is now stated.</li>
+<li><strong>Tightened the <code>CNTVCT_EL0</code> read</strong> by dropping <code>nomem</code> (see the table).</li>
+<li><strong>Made hardware counters thread-bound in the type system.</strong> The counter
+follows the thread that opened it, so reading it from another thread would
+silently measure the wrong thread. <code>HardwareCounter</code> is now neither <code>Send</code> nor
+<code>Sync</code>, on every platform, with a <code>compile_fail</code> doctest. Making that possible
+meant removing the <code>Send + Sync</code> supertrait from <code>MeasurementLayer</code>, which the
+crate never needed.</li>
+<li><strong>Pinned the kernel ABI size</strong> of <code>PerfEventAttr</code> with a unit test.</li>
+<li><strong>Added <code>forbid(unsafe_code)</code></strong> to the macros crate and <code>tpt-site</code>.</li>
 </ul>
-<h2 id="status">Status</h2>
-<p>The Phase 5 audit (todo.md) will re-check each block against these rules,
-run Miri where it applies, and record the results here.</p>
-<p>Miri: available (<code>cargo +nightly miri</code>). <code>clock::tests::instant_clock_is_monotonic</code>
-passes under Miri. <code>clock::tests::best_clock_converts_a_sleep_to_plausible_ns</code>
-aborts with "inline assembly is not supported", because <code>Clock::best()</code> calls
-<code>__cpuid</code> (inline asm) through <code>invariant_tsc_supported</code>. Miri cannot run the
-hardware clock path, so the <code>RDTSC</code>, <code>CPUID</code> and <code>CNTVCT_EL0</code> blocks are
-covered only by review and by the <code>cargo check</code> cross-target builds.</p>
+<h2 id="known-limitations">Known limitations</h2>
+<ul>
+<li><strong><code>RDTSC</code> can fault.</strong> Where user-space <code>RDTSC</code> is disabled, for example
+after <code>prctl(PR_SET_TSC, PR_TSC_SIGSEGV)</code> or under some sandboxes and
+record-and-replay tools, the first read raises <code>SIGSEGV</code>. The crate does not
+detect this. There is no switch to force the <code>Instant</code> clock yet. Constructing
+<code>Clock::instant()</code> directly avoids it.</li>
+<li><strong>Counter reads are not serialised.</strong> Neither <code>RDTSC</code> nor <code>mrs CNTVCT_EL0</code> is
+ordered against earlier instructions by the CPU, so a read can complete
+slightly before the work it follows. Batches last at least 1 ms by default,
+so the effect is far below the measurement noise. It would matter for a
+single very short timing, which this crate does not do.</li>
+<li><strong>A leaked fd on an unreachable path.</strong> If <code>perf_event_open</code> returned a value
+that does not fit a <code>c_int</code>, the descriptor would not be closed. The kernel
+never returns one, so this is not handled.</li>
+<li><strong>Perf counters have been exercised on Linux only as far as opening.</strong> See
+below.</li>
+</ul>
+<h2 id="how-each-is-verified">How each is verified</h2>
+<table><thead><tr><th>Check</th><th>Covers</th><th>Does not cover</th></tr></thead><tbody>
+<tr><td><code>cargo clippy -D warnings</code>, <code>cargo test</code> on Linux, macOS and Windows (CI)</td><td>All safe and unsafe code that runs on those targets, including the <code>GlobalAlloc</code> wrapper and the console calls</td><td>Anything that needs hardware the runner lacks</td></tr>
+<tr><td>Cross-target <code>cargo check</code> (aarch64 Linux, aarch64 Windows)</td><td>That the <code>CNTVCT_EL0</code> and <code>CNTFRQ_EL0</code> code compiles</td><td>Running it. The Apple Silicon <code>macos-latest</code> job is the first real run</td></tr>
+<tr><td>Linux run under WSL2 (Ubuntu, Rust 1.85)</td><td>The Linux backend compiles and its tests pass, including the ABI-size test; <code>perf_event_open</code> is attempted and its <code>ENOENT</code> is turned into the documented "unavailable" message</td><td>A successful counter read: WSL2 hides the PMU, so that path needs a real machine</td></tr>
+<tr><td>Miri job on Linux CI (<code>continue-on-error</code> until its first green run)</td><td><code>GlobalAlloc</code> wrapper and thread-local counters, the engine, batching, baselines, the no-op waker, under strict provenance</td><td>Inline asm and syscalls. Under Miri the clock uses <code>Instant</code> and the perf counter reports itself unavailable, so the <code>RDTSC</code>, <code>CPUID</code>, <code>mrs</code> and perf blocks are covered only by review and the checks above</td></tr>
+</tbody></table>
+<p>Still open (see <code>todo.md</code>): hardware tests on real machines for each OS, and a
+sanitizer run.</p>
 </article></main>
 <footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
 </body>

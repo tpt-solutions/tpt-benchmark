@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public API review for 1.0</title>
+<meta name="description" content="Public API review for 1.0 - tpt-benchmark documentation.">
+<meta property="og:title" content="Public API review for 1.0">
+<meta property="og:description" content="Public API review for 1.0 - tpt-benchmark documentation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tpt-benchmark">
+<link rel="canonical" href="https://tpt-solutions.github.io/tpt-benchmark/docs/api-review.html">
+<meta property="og:url" content="https://tpt-solutions.github.io/tpt-benchmark/docs/api-review.html">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d0d7de; --card: #f6f8fa;
+  --good: #1a7f37; --bad: #cf222e; --accent: #0969da;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+    --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --card: #161b22;
+  --good: #3fb950; --bad: #f85149; --accent: #58a6ff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header.page, main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0.5rem 0 0.2rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 2rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-style: italic; }
+.good { color: var(--good); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+.unit { color: var(--muted); font-weight: normal; font-size: 0.9em; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th { background: var(--card); font-weight: 600; }
+.num { text-align: right; }
+.toc ul { columns: 2 260px; padding-left: 1.2rem; }
+.toggle {
+  all: unset; cursor: pointer; font: inherit; font-weight: 600; color: var(--fg);
+}
+.toggle::before { content: "\25BE  "; color: var(--muted); }
+.toggle[aria-expanded="false"]::before { content: "\25B8  "; }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.layer {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px; margin: 10px 0 0;
+}
+.stats dt { color: var(--muted); font-size: 0.85rem; }
+.stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.chart { margin: 0; flex: 1 1 320px; max-width: 100%; color: var(--fg); }
+.chart figcaption { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+.chart svg { display: block; width: 100%; height: auto; max-width: 640px; }
+.chart text { fill: currentColor; }
+
+nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
+.machine { margin-top: 2.5rem; }
+footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Public API review for 1.0","isPartOf":{"@type":"WebSite","name":"tpt-benchmark benchmarks"}}</script>
+</head>
+<body>
+<nav class="site"><a href="../index.html">tpt-benchmark</a><a href="../docs/index.html">Documentation</a><a href="https://github.com/tpt-solutions/tpt-benchmark">Repository</a><a href="../data/index.json">Raw data</a></nav>
+<header class="page"><h1>Public API review for 1.0</h1></header>
+<main>
+<p><a href="index.html">All documentation</a></p>
+<article class="doc"><h1 id="public-api-review-for-10">Public API review for 1.0</h1>
+<p>This records the pre-1.0 review of the <code>tpt-benchmark</code> public API (2026-11-23):
+what was changed, what was left open on purpose, and a proposed stability
+policy. The public surface was listed from rustdoc's JSON output, so it covers
+every item reachable from outside the crate, not only the ones in the README.</p>
+<h2 id="principle">Principle</h2>
+<p>After 1.0, removing or changing a public item, or adding a required method or a
+public field to a constructible type, needs a major version. Adding things does
+not. So the review favours a small surface now: anything that can be added later
+without breaking anyone is left out until it is needed.</p>
+<h2 id="changes-made">Changes made</h2>
+<table><thead><tr><th>Change</th><th>Why</th></tr></thead><tbody>
+<tr><td><code>#[non_exhaustive]</code> on every struct the library produces: <code>Summary</code>, <code>BenchResult</code>, <code>Comparison</code>, <code>Baseline</code>, <code>Environment</code>, <code>Observations</code>, <code>Unavailable</code>, <code>HwSample</code>, <code>WallSample</code>, <code>AllocSample</code>, <code>AllocBytesSample</code></td><td>New fields (a new statistic, a new environment probe) would otherwise be breaking. Users read these types, so nothing is lost.</td></tr>
+<tr><td><code>#[non_exhaustive]</code> on the settings structs <code>Config</code>, <code>SequentialEngine</code>, <code>Sprt</code> and <code>Options</code>, plus <code>with_*</code> setters on the first three</td><td>These are where new knobs will arrive, for example per-benchmark settings, which the Criterion migration guide lists as missing. <code>non_exhaustive</code> forbids <code>Config { .. }</code> expressions outside the crate, and assigning fields after <code>default()</code> trips clippy's <code>field_reassign_with_default</code>, so the setters are the idiomatic way: <code>Config::default().with_warmup(..)</code>. Fields stay <code>pub</code>, so reading them and assigning them still work.</td></tr>
+<tr><td><code>#[non_exhaustive]</code> on <code>BenchDef</code>, with <code>BenchDef::new</code></td><td>The macros build it inside user crates. The macros now call <code>new</code>.</td></tr>
+<tr><td><code>StatisticalEngine</code> is sealed</td><td>The sampling loop uses <code>Config::engine</code>, a concrete <code>SequentialEngine</code>, so a custom engine could never be used. Freezing its three method signatures at 1.0 would limit later work for no benefit. Unsealing later is not breaking.</td></tr>
+<tr><td><code>MeasurementLayer</code> no longer requires <code>Send + Sync</code>; <code>HardwareCounter</code> is <code>!Send + !Sync</code></td><td>A hardware counter follows the thread that opened it. See <code>unsafe-policy.md</code>.</td></tr>
+<tr><td><code>Unavailable</code> implements <code>Display</code> and <code>Error</code></td><td><code>HardwareCounter::try_new</code> returns it as an error, so it has to work with <code>?</code> and <code>Box&lt;dyn Error&gt;</code>.</td></tr>
+<tr><td><code>json</code> is a public module holding only <code>SCHEMA_VERSION</code> and <code>FILE_NAME</code>; its functions are crate-private</td><td><code>json-schema.md</code> already cited <code>tpt_benchmark::json::SCHEMA_VERSION</code>, which was not reachable. <code>tpt-site</code> now uses the constant instead of a hard-coded <code>2</code>.</td></tr>
+</tbody></table>
+<p>Enums were already <code>#[non_exhaustive]</code> (<code>StopReason</code>, <code>Verdict</code>, <code>LayerKind</code>,
+<code>Counter</code>, <code>ClockSource</code>, <code>SprtDecision</code>, <code>Throughput</code>).</p>
+<h2 id="resolved-after-review">Resolved after review</h2>
+<p>These were the two questions that cannot be undone after 1.0, so they were
+decided before it.</p>
+<ol>
+<li><strong>Root re-exports.</strong> Only re-exports that have another public path were
+dropped: <code>thread_dealloc_totals</code>, <code>AllocSample</code>, <code>AllocBytesSample</code> and
+<code>HwSample</code>, which stay under <code>alloc::</code> and <code>hwcounters::</code>. Nothing in the
+tests, examples, docs or <code>tpt-site</code> used the root paths. The rest stay at the
+root, including <code>WallSample</code> and <code>Welford</code>, because their modules are private
+and the root is their only public path. (An earlier draft of this review said
+all of them were reachable through modules. That was wrong for those two.)</li>
+<li><strong>Public plumbing.</strong> Nothing outside the crate used <code>runner::run_benches</code>,
+<code>runner::Options</code>, <code>runner::output_dir</code>, the whole <code>baseline</code> module, the
+<code>environment</code> module, or <code>report::render_terminal</code> and <code>report::write_html</code>.
+They are now crate-private. <code>report</code> stays public but <code>#[doc(hidden)]</code>,
+because it still holds <code>report::site_support</code> for <code>tpt-site</code>. The unused
+<code>runner::baseline_path</code> wrapper was deleted. The public modules are now
+<code>alloc</code>, <code>engine</code>, <code>hwcounters</code>, <code>json</code> (two constants) and <code>runner</code>
+(<code>main</code>, <code>BenchDef</code>, <code>BenchResult</code>, <code>LayerKind</code>). Making any of the hidden
+items public again later is not a breaking change.</li>
+</ol>
+<h2 id="still-open-for-the-maintainer">Still open for the maintainer</h2>
+<p>These are judgement calls, so they were not changed.</p>
+<ol>
+<li><strong><code>SampleData: Copy + Send + Sync + 'static</code>.</strong> This constrains custom
+layers. It is probably stricter than needed now that layers are no longer
+<code>Send</code>. Loosening it later is not breaking, so it can wait.</li>
+<li><strong>Layer units.</strong> Custom layers have only a name, so the report shows their
+values as <code>value/iter</code>. A unit method with a default implementation can be
+added later without breaking anyone, so no change is needed now.</li>
+<li><strong><code>Welford</code> and <code>Sprt::decide</code>.</strong> Both are public building blocks with no
+other use in the API. Keep them only if they are meant to be supported.</li>
+</ol>
+<h2 id="proposed-stability-policy">Proposed stability policy</h2>
+<p>This is a proposal for the maintainer to confirm, not a policy already in force.</p>
+<ul>
+<li><strong>Semver covers</strong> every public item that is not <code>#[doc(hidden)]</code>. That includes
+<code>#[non_exhaustive]</code> types, which may gain fields, variants and methods in a
+minor release.</li>
+<li><strong><code>#[doc(hidden)]</code> items</strong> (such as <code>report::site_support</code> and <code>__tpt_benches</code>)
+exist for the macros and <code>tpt-site</code> and carry no stability promise.</li>
+<li><strong>The JSON export</strong> is versioned by <code>schema_version</code>. Adding optional fields
+does not bump it; renaming, removing or changing a unit does, and is a major
+release of the crate.</li>
+<li><strong>MSRV</strong> is 1.85 on stable. Raising it is a minor release and is noted in the
+CHANGELOG.</li>
+<li><strong>Before 1.0</strong>, minor versions may break the API, as the CHANGELOG says.</li>
+</ul>
+</article></main>
+<footer>Built with tpt-benchmark. Hosted CI runners are noisy and usually have no hardware counters, so compare trends on one machine rather than absolute numbers.</footer>
+</body>
+</html>

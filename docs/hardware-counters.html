@@ -177,6 +177,33 @@ VMs. This build does not use private APIs and reports:</p>
 </blockquote>
 <p>Windows benchmarks can use the <code>Allocations</code>, <code>AllocBytes</code> and <code>WallClock</code>
 layers. See <code>docs/allocations.md</code>.</p>
+<h3 id="investigation-2026-11-23">Investigation (2026-11-23)</h3>
+<p>A throwaway probe called the user-mode APIs Windows documents for this, on a
+Windows 11 Pro machine (build 26200) with an Intel Core i7-12700 and bare-metal
+hardware, but with Hyper-V present and virtualization-based security running
+(it hosts WSL2 and Docker). It was run twice, once as a normal user and once
+from an elevated (administrator) terminal. The results were identical:</p>
+<table><thead><tr><th>Call</th><th>Result</th></tr></thead><tbody>
+<tr><td><code>TraceQueryInformation(TraceProfileSourceListInfo)</code>, the list of PMC sources ETW can record</td><td>Win32 error 50, <code>ERROR_NOT_SUPPORTED</code>, with and without elevation</td></tr>
+<tr><td><code>EnableThreadProfiling</code> with hardware counters requested</td><td>Succeeds, but <code>ReadThreadProfilingData</code> reports <code>HwCountersCount = 0</code></td></tr>
+<tr><td><code>QueryThreadCycleTime</code></td><td>Works, and returns thread CPU cycles</td></tr>
+</tbody></table>
+<p>What this means:</p>
+<ul>
+<li>Administrator rights are not what blocks it: the elevated run failed the same
+way, with "not supported" rather than "access denied".</li>
+<li>With no PMC sources listed, there is nothing to configure in an ETW session,
+so the ETW route (the one Windows documents for counters) was not tried further.</li>
+<li><code>QueryThreadCycleTime</code> counts cycles, not retired instructions, so it cannot
+back the <code>HwInstructions</code> layer.</li>
+<li>The likely cause is the hypervisor, which commonly hides the CPU's counters
+from the OS above it. That was <strong>not confirmed</strong>: the probe was not run with the
+hypervisor off, which would also disable WSL2 and Docker on that machine.</li>
+</ul>
+<p>So a Windows backend could not be developed or tested on this machine as it is
+configured, and hosted CI runners are virtual machines that are expected to hide
+the counters as well. The layer therefore keeps reporting itself as unavailable
+on Windows.</p>
 <h2 id="other-platforms">Other platforms</h2>
 <p>The layer reports "hardware counters are not supported on this platform".</p>
 <h2 id="hardware-tests">Hardware tests</h2>

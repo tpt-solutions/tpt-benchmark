@@ -137,10 +137,11 @@ resulting <code>Summary</code> values and never touch the loop itself.</p>
 <tr><td><code>bencher</code></td><td><code>Config</code>, <code>Bencher</code>, and <code>measure()</code>. Owns the batched loop.</td></tr>
 <tr><td><code>engine</code></td><td><code>SequentialEngine</code> (the default <code>StatisticalEngine</code>), <code>Sprt</code>, <code>Observations</code>. Decides outliers and stop reasons.</td></tr>
 <tr><td><code>stats</code></td><td><code>Welford</code>, Student-t critical values, <code>median</code>, <code>scaled_mad</code>, <code>Summary</code>, <code>StopReason</code>.</td></tr>
-<tr><td><code>runner</code></td><td><code>BenchDef</code> (the generated table entry), <code>LayerKind</code>, <code>run_benches</code>, the command-line parser and <code>main()</code>.</td></tr>
-<tr><td><code>json</code></td><td>Versioned JSON export (<code>schema_version</code>, currently 1).</td></tr>
-<tr><td><code>baseline</code></td><td>Named baselines (<code>format_version</code>, currently 1), the statistical <code>compare()</code> and <code>Verdict</code>.</td></tr>
-<tr><td><code>report</code></td><td>Terminal table (colour respects <code>NO_COLOR</code> and non-TTY output) and the single-file HTML report.</td></tr>
+<tr><td><code>runner</code></td><td><code>BenchDef</code> (the generated table entry), <code>LayerKind</code>, <code>BenchResult</code> and <code>main()</code> are public. <code>run_benches</code> and the command-line parser are crate-private.</td></tr>
+<tr><td><code>json</code></td><td>Versioned JSON export (<code>schema_version</code>, currently 2). Only <code>SCHEMA_VERSION</code> and <code>FILE_NAME</code> are public.</td></tr>
+<tr><td><code>environment</code></td><td>Crate-private. Captures the machine and build (commit, OS, CPU, rustc, clock source) for the JSON export's <code>environment</code> block.</td></tr>
+<tr><td><code>baseline</code></td><td>Crate-private. Named baselines (<code>format_version</code>, currently 1), the statistical <code>compare()</code> and <code>Verdict</code>.</td></tr>
+<tr><td><code>report</code></td><td>Crate-internal rendering: the terminal table (colour respects <code>NO_COLOR</code> and non-TTY output) and the single-file HTML report. The public part is <code>#[doc(hidden)]</code> and exists for <code>tpt-site</code>.</td></tr>
 <tr><td><code>macros</code></td><td>The <code>tpt_benchmark::main!</code> macro. The attribute macros live in the <code>tpt-benchmark-macros</code> crate and are re-exported.</td></tr>
 </tbody></table>
 <h2 id="the-batched-loop">The batched loop</h2>
