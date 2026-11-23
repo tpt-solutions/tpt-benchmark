@@ -9,6 +9,7 @@ Dual `MIT OR Apache-2.0` crates pass through their MIT arm.
 | serde, serde_json | core (baselines, JSON export) | MIT OR Apache-2.0 |
 | plotters 0.3 (svg_backend, line_series) | core (HTML charts) | MIT |
 | serde, serde_json | tpt-site (not published) | MIT OR Apache-2.0 |
+| pulldown-cmark 0.13 (no default features) | tpt-site (not published), docs rendering | MIT |
 | libc 0.2 | core, Linux only (perf_event_open) | MIT OR Apache-2.0 |
 | proc-macro2, quote, syn 2 | macros | MIT OR Apache-2.0 |
 | trybuild | macros (dev only) | MIT OR Apache-2.0 |

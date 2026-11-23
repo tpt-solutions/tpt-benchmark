@@ -12,6 +12,7 @@ use tpt_benchmark::report::site_support::{
 };
 use tpt_benchmark::runner::BenchResult;
 
+use crate::docs::DocPage;
 use crate::model::Run;
 
 const WALL: &str = "WallClock";
@@ -19,6 +20,12 @@ const WALL: &str = "WallClock";
 const EXTRA_CSS: &str = r"
 nav.site { max-width: 1100px; margin: 0 auto 8px; display: flex; gap: 16px; flex-wrap: wrap; }
 .caveat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; }
+.doc { max-width: 52rem; }
+.doc pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; }
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.doc :not(pre) > code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+.doc blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 4px solid var(--line); color: var(--muted); }
+.doc img { max-width: 100%; }
 .machine { margin-top: 2.5rem; }
 footer { max-width: 1100px; margin: 3rem auto 0; color: var(--muted); font-size: 0.85rem; }
 ";
@@ -49,6 +56,8 @@ pub struct Config {
     pub base_url: Option<String>,
     /// Minimum change, in percent, for a non-overlapping interval to count as a regression.
     pub threshold_pct: f64,
+    /// Adds a Documentation link to the navigation bar.
+    pub has_docs: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -166,6 +175,11 @@ fn render_page(cfg: &Config, page: &Page<'_>) -> String {
     let repo_link = cfg.repo.as_ref().map_or_else(String::new, |r| {
         format!("<a href=\"{}\">Repository</a>", escape_html(r))
     });
+    let repo_link = if cfg.has_docs {
+        format!("<a href=\"{root}docs/index.html\">Documentation</a>{repo_link}")
+    } else {
+        repo_link
+    };
     format!(
         "<!doctype html>\n<html lang=\"en\">\n<head>\n{head}<style>{}{EXTRA_CSS}</style>\n\
          <script type=\"application/ld+json\">{jsonld}</script>\n</head>\n<body>\n\
@@ -213,8 +227,9 @@ fn previous_on_machine<'a>(runs: &'a [Run], index: usize, name: &str) -> Option<
 
 /// Writes the whole site into `out`. Returns descriptions of regressions
 /// found between the newest run and its predecessor on the same machine.
-pub fn build(out: &Path, runs: &[Run], cfg: &Config) -> io::Result<Vec<String>> {
+pub fn build(out: &Path, runs: &[Run], docs: &[DocPage], cfg: &Config) -> io::Result<Vec<String>> {
     fs::create_dir_all(out.join("b"))?;
+    write_docs(out, docs, cfg)?;
     let index = benchmark_index(runs);
     let mut regressions = Vec::new();
     let latest_index = runs.len().checked_sub(1);
@@ -335,11 +350,82 @@ pub fn build(out: &Path, runs: &[Run], cfg: &Config) -> io::Result<Vec<String>> 
                 escape_html(base)
             );
         }
+        if !docs.is_empty() {
+            let _ = writeln!(
+                sitemap,
+                "  <url><loc>{}docs/index.html</loc></url>",
+                escape_html(base)
+            );
+        }
+        for d in docs {
+            let _ = writeln!(
+                sitemap,
+                "  <url><loc>{}docs/{}.html</loc></url>",
+                escape_html(base),
+                d.slug
+            );
+        }
         sitemap.push_str("</urlset>\n");
         fs::write(out.join("sitemap.xml"), sitemap)?;
     }
     fs::write(out.join("robots.txt"), robots)?;
     Ok(regressions)
+}
+
+fn write_docs(out: &Path, docs: &[DocPage], cfg: &Config) -> io::Result<()> {
+    if docs.is_empty() {
+        return Ok(());
+    }
+    fs::create_dir_all(out.join("docs"))?;
+    let mut list = String::from("<ul>\n");
+    for d in docs {
+        let _ = writeln!(
+            list,
+            "<li><a href=\"{}.html\">{}</a></li>",
+            d.slug,
+            escape_html(&d.title)
+        );
+    }
+    list.push_str("</ul>\n");
+    let description = format!("Documentation for {}.", cfg.title);
+    let index = Page {
+        title: &format!("{} documentation", cfg.title),
+        description: &description,
+        path: "docs/index.html",
+        body: format!("<div class=\"doc\">{list}</div>"),
+        jsonld: serde_json::json!({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": format!("{} documentation", cfg.title),
+        }),
+    };
+    fs::write(
+        out.join("docs").join("index.html"),
+        render_page(cfg, &index),
+    )?;
+    for d in docs {
+        let path = format!("docs/{}.html", d.slug);
+        let page = Page {
+            title: &d.title,
+            description: &format!("{} - {} documentation.", d.title, cfg.title),
+            path: &path,
+            body: format!(
+                "<p><a href=\"index.html\">All documentation</a></p>\n<article class=\"doc\">{}</article>",
+                d.html
+            ),
+            jsonld: serde_json::json!({
+                "@context": "https://schema.org",
+                "@type": "TechArticle",
+                "headline": d.title,
+                "isPartOf": { "@type": "WebSite", "name": format!("{} benchmarks", cfg.title) },
+            }),
+        };
+        fs::write(
+            out.join("docs").join(format!("{}.html", d.slug)),
+            render_page(cfg, &page),
+        )?;
+    }
+    Ok(())
 }
 
 fn write_benchmark_page(
@@ -519,13 +605,27 @@ mod tests {
             repo: None,
             base_url: None,
             threshold_pct: 5.0,
+            has_docs: true,
         };
+        let docs = [DocPage {
+            slug: "guide".to_owned(),
+            title: "Guide".to_owned(),
+            html: "<p>hello</p>".to_owned(),
+        }];
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(dir.join("data")).unwrap();
-        build(&dir, &[], &cfg).unwrap();
+        build(&dir, &[], &docs, &cfg).unwrap();
         let index = fs::read_to_string(dir.join("index.html")).unwrap();
         assert!(index.contains("Open question: agreement with Criterion"));
         assert!(index.contains("comparison-criterion.md"));
+        assert!(index.contains("docs/index.html"));
+        let guide = fs::read_to_string(dir.join("docs").join("guide.html")).unwrap();
+        assert!(guide.contains("<p>hello</p>") && guide.contains("../index.html"));
+        assert!(
+            fs::read_to_string(dir.join("docs").join("index.html"))
+                .unwrap()
+                .contains("guide.html")
+        );
         fs::remove_dir_all(&dir).unwrap();
     }
 

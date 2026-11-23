@@ -1,7 +1,7 @@
 //! `tpt-site`: turns tpt-benchmark JSON exports into a static trend site.
 //!
 //! ```text
-//! tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression]
+//! tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression] [--docs DIR]
 //! tpt-site serve [--out DIR] [--port N]
 //! ```
 //!
@@ -9,6 +9,7 @@
 //! files are kept, so history accumulates across builds) and regenerates the
 //! site.
 
+mod docs;
 mod model;
 mod project;
 mod serve;
@@ -19,9 +20,10 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression]
+  tpt-site build [--input DIR] [--out DIR] [--title T] [--repo URL] [--base-url URL] [--threshold PCT] [--fail-on-regression] [--docs DIR]
   tpt-site serve [--out DIR] [--port N]
 
+--docs renders the Markdown files in DIR as pages under docs/ (default: ./docs when it exists).
 --fail-on-regression exits with status 1 (after writing the site) when the newest run is
 slower than the previous run on the same machine by more than --threshold.
 
@@ -36,6 +38,7 @@ struct Args {
     base_url: Option<String>,
     threshold: f64,
     fail_on_regression: bool,
+    docs: Option<PathBuf>,
     port: u16,
 }
 
@@ -48,6 +51,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
         base_url: None,
         threshold: 5.0,
         fail_on_regression: false,
+        docs: None,
         port: 8000,
     };
     let mut args = args.into_iter();
@@ -66,6 +70,7 @@ fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, String> {
                     .filter(|t| t.is_finite() && *t >= 0.0)
                     .ok_or("--threshold must be a non-negative number")?;
             }
+            "--docs" => a.docs = Some(value()?.into()),
             "--fail-on-regression" => a.fail_on_regression = true,
             "--port" => a.port = value()?.parse().map_err(|_| "--port must be 0-65535")?,
             other => return Err(format!("unknown argument `{other}`")),
@@ -95,7 +100,17 @@ fn build(a: &Args) -> Result<usize, String> {
     let runs = model::load_history(&data).map_err(|e| format!("{}: {e}", data.display()))?;
 
     let repo = a.repo.clone().or_else(project::default_repo_url);
+    let docs_dir = a.docs.clone().unwrap_or_else(|| PathBuf::from("docs"));
+    let docs = if docs_dir.is_dir() {
+        docs::collect(&docs_dir, repo.as_deref())
+            .map_err(|e| format!("{}: {e}", docs_dir.display()))?
+    } else if a.docs.is_some() {
+        return Err(format!("--docs {} is not a directory", docs_dir.display()));
+    } else {
+        Vec::new()
+    };
     let cfg = site::Config {
+        has_docs: !docs.is_empty(),
         title: a
             .title
             .clone()
@@ -108,7 +123,7 @@ fn build(a: &Args) -> Result<usize, String> {
         repo,
         threshold_pct: a.threshold,
     };
-    let regressions = site::build(&a.out, &runs, &cfg).map_err(|e| e.to_string())?;
+    let regressions = site::build(&a.out, &runs, &docs, &cfg).map_err(|e| e.to_string())?;
     println!("Wrote {} ({} runs in history)", a.out.display(), runs.len());
     for r in &regressions {
         println!("regression vs previous run: {r}");

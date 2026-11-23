@@ -12,7 +12,7 @@ minor versions may contain breaking changes.
 - `tpt-site` (not published; install with `cargo install --git`): `tpt-site build`
   turns the JSON export into a static site (index, one page per benchmark with
   per-machine history charts, sitemap, robots.txt, OpenGraph and JSON-LD) and
-  keeps every run under `data/` so trends accumulate. `tpt-site serve` previews it. The index page has an "About these numbers" section covering runner noise and the unresolved Criterion comparison. `--fail-on-regression` exits non-zero when the newest run is slower
+  keeps every run under `data/` so trends accumulate. `tpt-site serve` previews it. `--docs DIR` (default `./docs`) renders Markdown files as pages under `docs/`. The index page has an "About these numbers" section covering runner noise and the unresolved Criterion comparison. `--fail-on-regression` exits non-zero when the newest run is slower
   than the previous run on the same machine by more than `--threshold`.
 - Composite GitHub Action (`action.yml`) that runs benches, keeps history on the
   `gh-pages` branch and publishes the site, plus a `pages.yml` workflow for this repo.

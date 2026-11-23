@@ -100,7 +100,7 @@ To build the site locally:
 ```sh
 cargo install --git https://github.com/tpt-solutions/tpt-benchmark tpt-site
 cargo bench
-tpt-site build --input target/tpt-benchmark   # writes site/
+tpt-site build --input target/tpt-benchmark   # writes site/, and renders ./docs if present
 tpt-site serve                                # http://127.0.0.1:8000/
 ```
 

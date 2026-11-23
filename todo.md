@@ -129,7 +129,7 @@ Owner: TPT Solutions · License: `MIT OR Apache-2.0` · Edition 2024 · MSRV 1.8
 - [ ] Dogfood: write benchmarks for `tpt-math`, `tpt-cv`, `tpt-gis` (zero-alloc and SIMD instruction proofs)
 - [ ] rustdoc for all public items; `#![deny(missing_docs)]`
 - [ ] README, quickstart, examples directory
-- [ ] mdBook or docs pages: architecture, statistics method, layers, permissions per OS
+- [x] mdBook or docs pages: architecture, statistics method, layers, permissions per OS (Markdown in `docs/`, rendered by tpt-site; live once the Pages site is published)
 - [ ] Criterion → tpt-benchmark migration guide (and Divan/Iai notes)
 - [ ] CHANGELOG.md; semver and stability policy
 - [ ] Review the public API for 1.0 stability (trait signatures, `#[non_exhaustive]`)
@@ -156,7 +156,7 @@ Goal: any repo gets a public benchmark/trend site from ~5 lines of workflow YAML
 - [x] README section "Publish results to GitHub Pages" with the short snippet
 - [x] Site caveats: hosted runners are noisy and lack HW counters; Criterion discrepancy shown as an open question ("About these numbers" on the index page; the figures in it are copied from docs/comparison-criterion.md and need updating if that changes)
 - [ ] Optional later: curated SEO "atlas" pages in this repo only (Vec vs VecDeque, HashMap hashers, string building, ...) with hand-written intros and a data-quality gate
-- [ ] Optional later: render `docs/*.md` on the same site (covers Phase 5 mdBook item)
+- [x] Render `docs/*.md` on the same site: `tpt-site build --docs DIR` (default `./docs`), via pulldown-cmark (MIT) with raw HTML escaped, links between docs and heading anchors kept working, other relative links pointed at the repo
 
 ## Post-1.0 backlog
 - [ ] `cargo tpt-benchmark` CLI subcommand (compare/manage baselines)
