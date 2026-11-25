@@ -96,11 +96,20 @@ OS, the privileges of the user, and whether the machine exposes its PMU at all.
 When a counter cannot be opened, the layer reports <code>Unavailable</code> with a reason.
 The runner prints a warning and skips that layer. Nothing else fails.</p>
 <table><thead><tr><th>OS</th><th>Status in this build</th></tr></thead><tbody>
-<tr><td>Linux</td><td>Implemented with <code>perf_event_open</code>. Needs the permissions below.</td></tr>
-<tr><td>macOS</td><td>Not implemented. kperf/kpc is a private API that needs root.</td></tr>
-<tr><td>Windows</td><td>Not implemented. PMC access needs ETW or a kernel driver, and admin.</td></tr>
+<tr><td>Linux</td><td>Implemented with <code>perf_event_open</code>. Opens and degrades correctly; counts need real hardware to check.</td></tr>
+<tr><td>macOS</td><td><strong>Experimental.</strong> Private <code>kperf</code> frameworks, needs root. Written without a Mac; never run against real counters.</td></tr>
+<tr><td>Windows</td><td><strong>Experimental.</strong> ETW PMC sources plus thread profiling, needs administrator. Reports unavailable on the one machine it was tried on; the counting path has never run.</td></tr>
 <tr><td>Other</td><td>Not supported.</td></tr>
 </tbody></table>
+<p><strong>What "experimental" means here.</strong> The macOS and Windows backends are part of
+the 1.0 API, but they were written without being able to test them against
+working hardware counters. Treat their numbers as unverified until a run on
+real hardware says otherwise (the todo tracks that). They are built so that any
+problem, such as a missing framework, a denied call or a changed system, makes
+the layer report <code>Unavailable</code> with a reason and skip, never panic or print
+nonsense. The exception is a <em>changed signature</em> in a private macOS function,
+which cannot be detected (see below). Only the Linux backend has been checked
+as far as opening a counter.</p>
 <h2 id="linux">Linux</h2>
 <h3 id="permission-model">Permission model</h3>
 <p><code>perf_event_open</code> is governed by <code>/proc/sys/kernel/perf_event_paranoid</code>:</p>
@@ -162,20 +171,65 @@ read also returns the time the event was enabled and the time it was actually
 on a PMU. If the kernel multiplexes events, the delta is scaled by
 <code>enabled / running</code>. A counter that never ran in the batch reports 0.</p>
 <h2 id="macos">macOS</h2>
-<p>kperf and kpc are private frameworks. They need root, and their interface
-changes between macOS releases. This build does not link them and reports:</p>
-<blockquote>
-<p>kperf (private API, root required) not implemented in this build</p>
-</blockquote>
-<p>The layer is therefore unavailable on macOS, including Apple Silicon.</p>
+<p><strong>Experimental.</strong> <code>kperf</code> and <code>kperfdata</code> are private Apple frameworks with no
+header and no stability promise. The backend (<code>hwcounters/macos.rs</code>) finds them
+at run time with <code>dlopen</code> and each function with <code>dlsym</code>, then:</p>
+<ol>
+<li>takes the counters (<code>kpc_force_all_ctrs_set</code>), which <strong>needs root</strong>, so run
+the benchmark with <code>sudo</code>;</li>
+<li>looks the event up by name in this CPU's event database (<code>kpep_*</code>), trying
+Apple Silicon names first and Intel names after;</li>
+<li>programs and starts the counters, and reads the calling thread's counts with
+<code>kpc_get_thread_counters</code>, subtracting a reading taken at the start of each batch.</li>
+</ol>
+<p>Dropping the layer switches counting off and gives the counters back.</p>
+<p>What is and is not known:</p>
+<ul>
+<li>It type-checks and lints for <code>aarch64-apple-darwin</code> and <code>x86_64-apple-darwin</code>.
+It has <strong>not been run</strong>, so the call sequence, the function signatures and the
+event names are from memory of how other tools use these frameworks.</li>
+<li>A missing framework, a missing symbol, a missing event or a refused call all
+give <code>Unavailable</code>. A function whose <strong>signature changed</strong> in a macOS release
+is not detectable and could misbehave.</li>
+<li>The counters are system-wide. While the layer is alive it takes them from
+other users of the PMU, such as Instruments.</li>
+<li>Virtual machines, including GitHub's macOS runners, are expected to hide the
+counters, so CI can check the unavailable path but probably not real counts.</li>
+<li>Which events exist differs by CPU. If none of the candidate names is in the
+database, that counter is unavailable.</li>
+</ul>
 <h2 id="windows">Windows</h2>
-<p>Windows exposes PMCs through ETW, kernel-mode drivers and vendor PMU
-extensions. Each needs administrator rights, and most are unavailable inside
-VMs. This build does not use private APIs and reports:</p>
-<blockquote>
-<p>hardware counters not supported on Windows in this build; see docs/hardware-counters.md</p>
-</blockquote>
-<p>Windows benchmarks can use the <code>Allocations</code>, <code>AllocBytes</code> and <code>WallClock</code>
+<p><strong>Experimental.</strong> The backend (<code>hwcounters/windows.rs</code>) uses only documented
+user-mode APIs, with no driver:</p>
+<ol>
+<li>enable <code>SeSystemProfilePrivilege</code> on the process token (<strong>needs an
+administrator</strong>, so run from an elevated terminal);</li>
+<li>ask ETW which PMC "profile sources" the CPU offers
+(<code>TraceQueryInformation</code>, <code>TraceProfileSourceListInfo</code>) and pick the one for
+the event by name;</li>
+<li>start the NT Kernel Logger session and give it that source as its PMC counter
+list (<code>TraceSetInformation</code>, <code>TracePmcCounterListInfo</code>);</li>
+<li>enable thread profiling for the calling thread and read the counter with
+<code>ReadThreadProfilingData</code>, subtracting a reading taken at the start of each batch.</li>
+</ol>
+<p>Starting the kernel logger is system-wide: it fails if another tool owns it, and
+it is stopped when the layer is dropped.</p>
+<p>What is and is not known:</p>
+<ul>
+<li><strong>Step 2 has been run, and fails on the development machine.</strong> There, Windows
+answers with <code>ERROR_NOT_SUPPORTED</code> with or without elevation (see below), so the
+layer reports <code>Unavailable</code> and says a hypervisor commonly causes that. That
+path is covered by tests.</li>
+<li><strong>Steps 3 and 4 have never run.</strong> They follow Microsoft's documented
+sequence from memory, including struct layouts and the counter-index
+convention, and have not been checked against working counters.</li>
+<li>The source names (<code>InstructionRetired</code>, <code>BranchMispredictsRetired</code>,
+<code>LLCMisses</code>, ...) are from memory of <code>xperf -pmcsources</code> on Intel CPUs. There is
+no generic L1 source, so <code>HwL1Misses</code> is always unavailable on Windows.</li>
+<li>Hosted CI runners and other virtual machines are expected to hide the
+counters.</li>
+</ul>
+<p>Windows benchmarks can always use the <code>Allocations</code>, <code>AllocBytes</code> and <code>WallClock</code>
 layers. See <code>docs/allocations.md</code>.</p>
 <h3 id="investigation-2026-11-23">Investigation (2026-11-23)</h3>
 <p>A throwaway probe called the user-mode APIs Windows documents for this, on a
@@ -200,10 +254,10 @@ back the <code>HwInstructions</code> layer.</li>
 from the OS above it. That was <strong>not confirmed</strong>: the probe was not run with the
 hypervisor off, which would also disable WSL2 and Docker on that machine.</li>
 </ul>
-<p>So a Windows backend could not be developed or tested on this machine as it is
-configured, and hosted CI runners are virtual machines that are expected to hide
-the counters as well. The layer therefore keeps reporting itself as unavailable
-on Windows.</p>
+<p>So the counting path of the Windows backend could not be developed or tested on
+this machine as it is configured, and hosted CI runners are virtual machines
+that are expected to hide the counters as well. The experimental backend
+therefore reports itself as unavailable here, with the explanation above.</p>
 <h2 id="other-platforms">Other platforms</h2>
 <p>The layer reports "hardware counters are not supported on this platform".</p>
 <h2 id="hardware-tests">Hardware tests</h2>
